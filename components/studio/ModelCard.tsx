@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { Sparkles, ArrowRight } from 'lucide-react'
 
 interface Model {
@@ -44,10 +45,13 @@ export function ModelCard({ model }: { model: Model }) {
           <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">{model.age_range}</span>
         </div>
 
-        <button className="w-full mt-4 py-2 rounded-xl bg-white/5 hover:bg-primary border border-white/5 hover:border-primary transition-all duration-300 flex items-center justify-center gap-2 group/btn">
+        <Link
+          href={`/dashboard/create-post?modelId=${encodeURIComponent(model.id)}`}
+          className="w-full mt-4 py-2 rounded-xl bg-white/5 hover:bg-primary border border-white/5 hover:border-primary transition-all duration-300 flex items-center justify-center gap-2 group/btn"
+        >
           <span className="text-xs font-bold text-white">Generate Post</span>
           <ArrowRight className="w-3.5 h-3.5 text-white group-hover/btn:translate-x-1 transition-transform" />
-        </button>
+        </Link>
       </div>
     </div>
   )

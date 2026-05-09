@@ -7,6 +7,62 @@ import { AI_CONFIG } from '../ai-config';
 
 const LUMA_API_BASE = 'https://agents.lumalabs.ai/v1';
 
+/** Trim and lighten duplicate openers (e.g. avoid "headshot of A stunning …" when subject already starts that way). */
+function normalizeSubjectDescription(raw: string): string {
+  let s = raw.trim().replace(/\s+/g, ' ');
+  s = s.replace(/^(a|an)\s+stunning\s+/i, '$1 ');
+  return s;
+}
+
+type InfluencerShotKind = 'portrait' | 'fullBody';
+
+function buildLumaPortraitPrompt(subject: string): string {
+  return [
+    `Headshot portrait of ${subject}.`,
+    'Framing: head and shoulders, subject facing camera or slight three-quarter, clean or minimal background.',
+    'Studio lighting, photorealistic, single subject.',
+  ].join(' ');
+}
+
+function buildLumaFullBodyPrompt(subject: string): string {
+  return [
+    `Full body fashion photograph of ${subject}.`,
+    'Framing: full length, head to toe visible, editorial fashion pose.',
+    'Professional lighting, photorealistic, single subject.',
+  ].join(' ');
+}
+
+function buildGeminiInfluencerInstruction(
+  subject: string,
+  aspectRatio: string,
+  shot: InfluencerShotKind
+): string {
+  const identity =
+    'Use one consistent person only: same face, skin tone, hair, and body type as in the subject description. No extra people.';
+
+  if (shot === 'portrait') {
+    return [
+      `Generate a photorealistic ${aspectRatio} editorial photograph.`,
+      '',
+      `Subject: ${subject}`,
+      '',
+      identity,
+      '',
+      'Framing: head-and-shoulders portrait, sharp focus on the face and eyes, clean or minimalist background, soft professional studio lighting.',
+    ].join('\n');
+  }
+
+  return [
+    `Generate a photorealistic ${aspectRatio} editorial photograph.`,
+    '',
+    `Subject: ${subject}`,
+    '',
+    identity,
+    '',
+    'Framing: full-body fashion shot, head to toe visible, editorial pose and styling that match the subject description, professional lighting, tasteful negative space.',
+  ].join('\n');
+}
+
 async function lumaFetch(endpoint: string, options: RequestInit = {}) {
   // Try to get from both, trimming whitespace
   const apiKey = (process.env.LUMA_AGENTS_API_KEY || process.env.NEXT_PUBLIC_LUMA_AGENTS_API_KEY)?.trim();
@@ -126,20 +182,25 @@ async function uploadToSupabase(buffer: Buffer, fileName: string) {
   }
 }
 
-async function generateGeminiImage(prompt: string, aspectRatio: string = '1:1') {
+async function generateGeminiImage(
+  subject: string,
+  aspectRatio: string,
+  shot: InfluencerShotKind
+) {
   const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY)?.trim();
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY is not set. Please add it to your .env file.');
   }
 
-  console.log(`[Gemini] Generating image: "${prompt}" (${aspectRatio})`);
-  const genAI = new GoogleGenerativeAI(apiKey);
-  // Using gemini-2.0-flash which supports native image generation (Nano Banana)
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
+  const instruction = buildGeminiInfluencerInstruction(subject, aspectRatio, shot);
+  console.log(
+    `[Gemini] Generating ${shot} (${aspectRatio}); subject preview: ${subject.slice(0, 100)}${subject.length > 100 ? '…' : ''}`
+  );
 
-  const result = await model.generateContent([
-    { text: `Generate a high-quality ${aspectRatio} image of: ${prompt}. Professional lighting, 8k resolution, cinematic.` }
-  ]);
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
+
+  const result = await model.generateContent([{ text: instruction }]);
 
   const response = await result.response;
   const candidate = response.candidates?.[0];
@@ -157,6 +218,8 @@ async function generateGeminiImage(prompt: string, aspectRatio: string = '1:1') 
 export async function generateInfluencerImages(basePrompt: string) {
   console.log(`Starting Influencer Generation process... Provider config: ${AI_CONFIG.IMAGE_PROVIDER}`);
 
+  const subject = normalizeSubjectDescription(basePrompt);
+
   const doLuma = AI_CONFIG.IMAGE_PROVIDER === 'luma' || AI_CONFIG.IMAGE_PROVIDER === 'auto';
   const doGeminiFallback = AI_CONFIG.IMAGE_PROVIDER === 'auto';
   const doGeminiOnly = AI_CONFIG.IMAGE_PROVIDER === 'gemini';
@@ -166,8 +229,8 @@ export async function generateInfluencerImages(basePrompt: string) {
   if (doLuma) {
     // 1. Try Luma
     try {
-      const portraitPrompt = `Headshot portrait of ${basePrompt}. Studio lighting, high quality.`;
-      const fullBodyPrompt = `Full body fashion photography of ${basePrompt}. Professional lighting, 8k resolution.`;
+      const portraitPrompt = buildLumaPortraitPrompt(subject);
+      const fullBodyPrompt = buildLumaFullBodyPrompt(subject);
 
       console.log('Attempting Luma AI generation...');
       const [portraitUrl, fullBodyUrl] = await Promise.all([
@@ -195,15 +258,12 @@ export async function generateInfluencerImages(basePrompt: string) {
   }
 
   if (doGeminiOnly || (doGeminiFallback && lumaErrorMsg)) {
-    // 2. Gemini
+    // 2. Gemini (single structured instruction per shot — no double-wrapped prompts)
     try {
-      const portraitPrompt = `A stunning headshot portrait of ${basePrompt}`;
-      const fullBodyPrompt = `A stunning full body fashion photo of ${basePrompt}`;
-
       console.log('Attempting Gemini AI (Nano Banana) generation...');
       const [portraitUrl, fullBodyUrl] = await Promise.all([
-        generateGeminiImage(portraitPrompt, '1:1'),
-        generateGeminiImage(fullBodyPrompt, '9:16')
+        generateGeminiImage(subject, '1:1', 'portrait'),
+        generateGeminiImage(subject, '9:16', 'fullBody'),
       ]);
 
       return {

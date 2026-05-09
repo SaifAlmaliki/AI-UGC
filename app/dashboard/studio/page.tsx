@@ -78,7 +78,7 @@ export default async function StudioPage() {
               <h2 className="text-xl font-bold text-white mb-1.5">Create New Post</h2>
               <p className="text-xs text-slate-400 mb-6 flex-1">Generate high-quality social media posts using your AI models.</p>
               <div className="flex items-center text-purple-500 text-sm font-bold gap-2 group-hover:translate-x-2 transition-transform">
-                Coming Soon <ArrowRight className="w-3.5 h-3.5" />
+                Get Started <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </div>
           </div>

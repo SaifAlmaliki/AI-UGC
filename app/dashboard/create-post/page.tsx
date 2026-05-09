@@ -19,9 +19,10 @@ import { Suspense } from 'react'
 function PostGeneratorContent() {
   const searchParams = useSearchParams()
   const initialDate = searchParams.get('date') || ''
+  const initialModelId = searchParams.get('modelId') || ''
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    modelId: '',
+    modelId: initialModelId,
     platform: ['instagram'],
     format: 'single',
     briefData: {},
@@ -121,7 +122,7 @@ function PostGeneratorContent() {
         {/* Left Column - Form */}
         <div className="lg:col-span-7 space-y-10">
           <section className="glass rounded-3xl p-8 space-y-8 shadow-xl">
-            <ModelPicker onSelect={handleModelSelect} />
+            <ModelPicker onSelect={handleModelSelect} initialModelId={initialModelId || null} />
             <hr className="border-white/5" />
             <PlatformTabs onSelect={handlePlatformSelect} connectedAccounts={connectedAccounts} />
             <hr className="border-white/5" />

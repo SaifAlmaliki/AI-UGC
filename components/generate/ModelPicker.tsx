@@ -12,7 +12,13 @@ interface Model {
   portrait_image_url: string
 }
 
-export default function ModelPicker({ onSelect }: { onSelect: (modelId: string) => void }) {
+export default function ModelPicker({
+  onSelect,
+  initialModelId,
+}: {
+  onSelect: (modelId: string) => void
+  initialModelId?: string | null
+}) {
   const [models, setModels] = useState<Model[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -22,14 +28,18 @@ export default function ModelPicker({ onSelect }: { onSelect: (modelId: string) 
       const data = await getModelsAction()
       setModels(data)
       setLoading(false)
-      if (data.length > 0 && !selectedId) {
-        setSelectedId(data[0].id)
-        onSelect(data[0].id)
+      if (data.length > 0) {
+        const preferred =
+          initialModelId && data.some((m) => m.id === initialModelId)
+            ? initialModelId
+            : data[0].id
+        setSelectedId(preferred)
+        onSelect(preferred)
       }
     }
     fetchModels()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [initialModelId])
 
   if (loading) {
     return (
