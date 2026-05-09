@@ -28,7 +28,7 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -36,7 +36,15 @@ export default function LoginPage() {
           },
         });
         if (error) throw error;
-        setMessage("Check your email for the confirmation link!");
+        // Duplicate or obfuscated sign-up: Supabase returns 200 but sends no email (empty identities).
+        const identities = data.user?.identities;
+        if (identities && identities.length === 0) {
+          setError(
+            "This email is already registered. Sign in with your password, use Google, or reset your password.",
+          );
+        } else {
+          setMessage("Check your email for the confirmation link!");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,

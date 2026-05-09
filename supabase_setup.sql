@@ -1,100 +1,200 @@
--- 1. FIX MODELS TABLE POLICIES
--- Enable RLS
-ALTER TABLE models ENABLE ROW LEVEL SECURITY;
+-- AI-UGC / AI Influencer — full Supabase schema aligned with this repo
+-- Run in: Supabase Dashboard → SQL Editor
+-- Prerequisites: Auth enabled (auth.users). gen_random_uuid() is available by default.
 
--- Allow users to view their own models
-DROP POLICY IF EXISTS "Users can view their own models" ON models;
-CREATE POLICY "Users can view their own models" 
-ON models FOR SELECT 
-TO authenticated 
-USING (auth.uid() = user_id);
+-- ---------------------------------------------------------------------------
+-- TABLES
+-- ---------------------------------------------------------------------------
 
--- Allow users to insert their own models
-DROP POLICY IF EXISTS "Users can insert their own models" ON models;
-CREATE POLICY "Users can insert their own models" 
-ON models FOR INSERT 
-TO authenticated 
-WITH CHECK (auth.uid() = user_id);
-
--- 2. FIX STORAGE POLICIES
--- Allow authenticated users to upload to 'influencers' bucket
-DROP POLICY IF EXISTS "Allow authenticated uploads" ON storage.objects;
-CREATE POLICY "Allow authenticated uploads"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (bucket_id = 'influencers');
-
--- Allow public read access to 'influencers' bucket
-DROP POLICY IF EXISTS "Allow public read" ON storage.objects;
-CREATE POLICY "Allow public read"
-ON storage.objects FOR SELECT
-TO public
-USING (bucket_id = 'influencers');
-
--- 3. CREATE POSTS TABLE
-CREATE TABLE IF NOT EXISTS posts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  model_id UUID REFERENCES models(id) ON DELETE SET NULL,
-  image_url TEXT NOT NULL,
-  platform TEXT NOT NULL,
-  caption TEXT,
-  status TEXT DEFAULT 'draft',
-  scheduled_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+create table if not exists public.profiles (
+  id uuid primary key references auth.users (id) on delete cascade,
+  email text unique not null,
+  full_name text,
+  avatar_url text,
+  credits integer not null default 0,
+  plan text not null default 'free',
+  zernio_profile_id text,
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  created_at timestamptz not null default (now() at time zone 'utc')
 );
 
--- Enable RLS
-ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
-
--- Table Policies
-DROP POLICY IF EXISTS "Users can view their own posts" ON posts;
-CREATE POLICY "Users can view their own posts" ON posts FOR SELECT TO authenticated USING (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Users can insert their own posts" ON posts;
-CREATE POLICY "Users can insert their own posts" ON posts FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-
--- 4. ADDITIONAL STORAGE POLICIES FOR 'POSTS' BUCKET
--- Allow authenticated users to upload to 'posts' bucket
-DROP POLICY IF EXISTS "Allow authenticated uploads to posts" ON storage.objects;
-CREATE POLICY "Allow authenticated uploads to posts"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (bucket_id = 'posts');
-
--- Allow public read access to 'posts' bucket
-DROP POLICY IF EXISTS "Allow public read from posts" ON storage.objects;
-CREATE POLICY "Allow public read from posts"
-ON storage.objects FOR SELECT
-TO public
-USING (bucket_id = 'posts');
-
--- 5. SOCIAL ACCOUNTS INTEGRATION
--- Add zernio_profile_id to profiles
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS zernio_profile_id TEXT;
-
--- Create social_accounts table
-CREATE TABLE IF NOT EXISTS social_accounts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  platform TEXT NOT NULL,
-  zernio_account_id TEXT NOT NULL UNIQUE,
-  account_name TEXT,
-  account_image TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+create table if not exists public.models (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  name text not null,
+  gender text,
+  body_type text,
+  skin_tone text,
+  age_range text,
+  hair_style_color text,
+  vibe_aesthetic text,
+  prompt text,
+  portrait_image_url text,
+  full_body_image_url text,
+  created_at timestamptz not null default (now() at time zone 'utc')
 );
 
--- Enable RLS
-ALTER TABLE social_accounts ENABLE ROW LEVEL SECURITY;
+create table if not exists public.posts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  model_id uuid references public.models (id) on delete set null,
+  image_url text not null,
+  platform text not null,
+  caption text,
+  status text default 'draft',
+  scheduled_at timestamptz,
+  created_at timestamptz not null default (now() at time zone 'utc')
+);
 
--- Table Policies
-DROP POLICY IF EXISTS "Users can view their own social accounts" ON social_accounts;
-CREATE POLICY "Users can view their own social accounts" ON social_accounts FOR SELECT TO authenticated USING (auth.uid() = user_id);
+create table if not exists public.social_accounts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  platform text not null,
+  zernio_account_id text not null,
+  account_name text,
+  account_image text,
+  created_at timestamptz not null default (now() at time zone 'utc'),
+  constraint social_accounts_zernio_account_id_key unique (zernio_account_id)
+);
 
-DROP POLICY IF EXISTS "Users can delete their own social accounts" ON social_accounts;
-CREATE POLICY "Users can delete their own social accounts" ON social_accounts FOR DELETE TO authenticated USING (auth.uid() = user_id);
+-- ---------------------------------------------------------------------------
+-- INDEXES (FK / common filters)
+-- ---------------------------------------------------------------------------
 
--- 6. ADD STRIPE COLUMNS TO PROFILES
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free';
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
+create index if not exists models_user_id_idx on public.models (user_id);
+create index if not exists posts_user_id_idx on public.posts (user_id);
+create index if not exists posts_status_scheduled_at_idx on public.posts (user_id, status, scheduled_at);
+create index if not exists social_accounts_user_id_idx on public.social_accounts (user_id);
+create index if not exists profiles_stripe_subscription_id_idx on public.profiles (stripe_subscription_id);
+
+-- ---------------------------------------------------------------------------
+-- ROW LEVEL SECURITY
+-- ---------------------------------------------------------------------------
+
+alter table public.profiles enable row level security;
+alter table public.models enable row level security;
+alter table public.posts enable row level security;
+alter table public.social_accounts enable row level security;
+
+-- profiles
+drop policy if exists "Users can read own profile" on public.profiles;
+create policy "Users can read own profile"
+  on public.profiles for select to authenticated
+  using (auth.uid() = id);
+
+drop policy if exists "Users can insert own profile" on public.profiles;
+create policy "Users can insert own profile"
+  on public.profiles for insert to authenticated
+  with check (auth.uid() = id);
+
+drop policy if exists "Users can update own profile" on public.profiles;
+create policy "Users can update own profile"
+  on public.profiles for update to authenticated
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
+
+-- models
+drop policy if exists "Users can view their own models" on public.models;
+create policy "Users can view their own models"
+  on public.models for select to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own models" on public.models;
+create policy "Users can insert their own models"
+  on public.models for insert to authenticated
+  with check (auth.uid() = user_id);
+
+-- posts
+drop policy if exists "Users can view their own posts" on public.posts;
+create policy "Users can view their own posts"
+  on public.posts for select to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own posts" on public.posts;
+create policy "Users can insert their own posts"
+  on public.posts for insert to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own posts" on public.posts;
+create policy "Users can update their own posts"
+  on public.posts for update to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- social_accounts
+drop policy if exists "Users can view their own social accounts" on public.social_accounts;
+create policy "Users can view their own social accounts"
+  on public.social_accounts for select to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own social accounts" on public.social_accounts;
+create policy "Users can delete their own social accounts"
+  on public.social_accounts for delete to authenticated
+  using (auth.uid() = user_id);
+
+-- Server actions often use the service role (bypasses RLS). RLS still protects anon/key misuse.
+
+-- ---------------------------------------------------------------------------
+-- STORAGE (buckets + policies) — used by lib/actions/luma.ts and posts.ts
+-- ---------------------------------------------------------------------------
+
+insert into storage.buckets (id, name, public)
+values ('influencers', 'influencers', true)
+on conflict (id) do update set public = excluded.public;
+
+insert into storage.buckets (id, name, public)
+values ('posts', 'posts', true)
+on conflict (id) do update set public = excluded.public;
+
+drop policy if exists "Allow authenticated uploads" on storage.objects;
+create policy "Allow authenticated uploads"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'influencers');
+
+drop policy if exists "Allow public read influencers" on storage.objects;
+create policy "Allow public read influencers"
+  on storage.objects for select to public
+  using (bucket_id = 'influencers');
+
+drop policy if exists "Allow authenticated uploads to posts" on storage.objects;
+create policy "Allow authenticated uploads to posts"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'posts');
+
+drop policy if exists "Allow public read from posts" on storage.objects;
+create policy "Allow public read from posts"
+  on storage.objects for select to public
+  using (bucket_id = 'posts');
+
+-- Upsert/replace uploads need update (and select) in addition to insert
+drop policy if exists "Allow authenticated select influencers objects" on storage.objects;
+create policy "Allow authenticated select influencers objects"
+  on storage.objects for select to authenticated
+  using (bucket_id = 'influencers');
+
+drop policy if exists "Allow authenticated update influencers objects" on storage.objects;
+create policy "Allow authenticated update influencers objects"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'influencers')
+  with check (bucket_id = 'influencers');
+
+drop policy if exists "Allow authenticated select posts objects" on storage.objects;
+create policy "Allow authenticated select posts objects"
+  on storage.objects for select to authenticated
+  using (bucket_id = 'posts');
+
+drop policy if exists "Allow authenticated update posts objects" on storage.objects;
+create policy "Allow authenticated update posts objects"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'posts')
+  with check (bucket_id = 'posts');
+
+-- ---------------------------------------------------------------------------
+-- If you already created `profiles` from an older template (missing columns):
+-- alter table public.profiles add column if not exists credits integer not null default 0;
+-- alter table public.profiles add column if not exists plan text not null default 'free';
+-- alter table public.profiles add column if not exists zernio_profile_id text;
+-- alter table public.profiles add column if not exists stripe_customer_id text;
+-- alter table public.profiles add column if not exists stripe_subscription_id text;
+-- ---------------------------------------------------------------------------

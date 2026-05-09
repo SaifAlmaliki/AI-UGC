@@ -176,7 +176,15 @@ async function generateVariant(prompt: string, aspectRatio: string = '1:1', mode
     console.log(`Attempting Luma generation for: ${prompt}`);
     return await generateLumaPost(prompt, aspectRatio, modelImage, referenceImages);
   } catch (error) {
-    console.warn('Luma post generation failed, falling back to Gemini:', error);
+    const message = error instanceof Error ? error.message : String(error)
+    const lumaUnavailable =
+      message.includes('Payment Required') ||
+      message.includes('LUMA_AGENTS_API_KEY is not set')
+    if (lumaUnavailable) {
+      console.info('Post image provider: skipping Luma (%s); using Gemini.', lumaUnavailable && message.includes('Payment Required') ? '402 billing' : 'missing key')
+    } else {
+      console.warn('Luma post generation failed, falling back to Gemini:', error)
+    }
     try {
       return await generateGeminiPost(prompt, aspectRatio, modelImage, referenceImages);
     } catch (geminiError: any) {

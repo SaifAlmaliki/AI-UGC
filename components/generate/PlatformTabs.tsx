@@ -107,36 +107,37 @@ export default function PlatformTabs({ onSelect, connectedAccounts }: PlatformTa
               const isSelected = selected.includes(platform.id)
               const isConnecting = connecting === platform.id
 
+              const rowClass = `flex w-full items-center gap-2 rounded-xl border transition-all duration-300 ${
+                isSelected
+                  ? 'bg-white/10 border-white/20 text-white'
+                  : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/8'
+              }`
+
               return (
                 <div key={platform.id} className="relative group">
-                  <button
-                    onClick={() => handleSelect(platform.id)}
-                    className={`w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl border transition-all duration-300 ${
-                      isSelected
-                        ? 'bg-white/10 border-white/20 text-white'
-                        : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/8'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-600'}`} />
+                  <div className={`${rowClass} overflow-hidden`}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelect(platform.id)}
+                      className="flex min-w-0 flex-1 items-center gap-2 px-4 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50"
+                    >
+                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-white' : 'text-slate-600'}`} />
                       <span className="text-[11px] font-medium">{platform.name}</span>
-                    </div>
-                    
+                    </button>
                     {isSelected && !isConnecting && (
-                       <button 
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           handleConnect(platform.id);
-                         }}
-                         className="p-1.5 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 transition-colors"
-                         title="Connect Account"
-                       >
-                         <Plus className="w-3 h-3" />
-                       </button>
+                      <button
+                        type="button"
+                        onClick={() => handleConnect(platform.id)}
+                        className="shrink-0 p-1.5 mr-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 transition-colors"
+                        title="Connect Account"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
                     )}
-                    
-                    {isConnecting && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
-                  </button>
+                    {isConnecting && (
+                      <Loader2 className="shrink-0 w-3 h-3 mr-3 animate-spin text-primary" aria-hidden />
+                    )}
+                  </div>
                 </div>
               )
             })}

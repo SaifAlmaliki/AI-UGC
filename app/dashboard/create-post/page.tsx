@@ -152,7 +152,7 @@ function PostGeneratorContent() {
             <div className="flex gap-4">
               {formData.referenceImages.map((img, i) => (
                 <div key={i} className="relative w-24 h-24 rounded-2xl overflow-hidden border border-white/10 group">
-                  <Image src={img} alt="ref" fill className="object-cover" />
+                  <Image src={img} alt="ref" fill sizes="96px" className="object-cover" />
                   <button 
                     onClick={() => setFormData(prev => ({ ...prev, referenceImages: prev.referenceImages.filter((_, idx) => idx !== i) }))}
                     className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"

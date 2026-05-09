@@ -86,6 +86,7 @@ export default function PostPreview({ platform, format, imageUrls, caption }: Po
                   src={imageUrls[activeVariant]}
                   alt="Post Preview"
                   fill
+                  sizes="(max-width: 448px) 100vw, 400px"
                   className="object-cover"
                 />
               ) : (

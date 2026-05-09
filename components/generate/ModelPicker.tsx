@@ -52,7 +52,7 @@ export default function ModelPicker({ onSelect }: { onSelect: (modelId: string) 
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {models.map((model) => (
+        {models.map((model, index) => (
           <button
             key={model.id}
             onClick={() => {
@@ -69,6 +69,8 @@ export default function ModelPicker({ onSelect }: { onSelect: (modelId: string) 
                 src={model.portrait_image_url}
                 alt={model.name}
                 fill
+                sizes="(max-width: 640px) 50vw, 33vw"
+                priority={index === 0}
                 className={`object-cover transition-transform duration-500 ${selectedId === model.id ? 'scale-110' : 'group-hover:scale-105'
                   }`}
               />
