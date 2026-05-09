@@ -17,15 +17,41 @@ async function zernioFetch(endpoint: string, options: RequestInit = {}) {
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(`Zernio API error: ${response.statusText} ${errorData.message || ''}`);
+    const errorData = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+    const msg =
+      typeof errorData.message === 'string'
+        ? errorData.message
+        : typeof errorData.error === 'string'
+          ? errorData.error
+          : typeof (errorData.error as { message?: string } | undefined)?.message === 'string'
+            ? (errorData.error as { message: string }).message
+            : Object.keys(errorData).length > 0
+              ? JSON.stringify(errorData)
+              : '';
+    throw new Error(
+      `Zernio API error: ${response.status} ${response.statusText}${msg ? ` — ${msg}` : ''}`
+    );
   }
 
   return response.json();
 }
 
+function profilesFromListResponse(res: unknown): Array<Record<string, unknown>> {
+  if (Array.isArray(res)) return res as Array<Record<string, unknown>>;
+  if (res && typeof res === 'object') {
+    const o = res as Record<string, unknown>;
+    if (Array.isArray(o.profiles)) return o.profiles as Array<Record<string, unknown>>;
+    if (Array.isArray(o.data)) return o.data as Array<Record<string, unknown>>;
+  }
+  return [];
+}
+
 export const zernio = {
   profiles: {
+    list: async () => {
+      const res = await zernioFetch('/profiles');
+      return { profiles: profilesFromListResponse(res) };
+    },
     create: async (name: string, description?: string) => {
       return zernioFetch('/profiles', {
         method: 'POST',
@@ -38,8 +64,9 @@ export const zernio = {
       // Ensure platform is lowercase as expected by Zernio
       const p = platform.toLowerCase();
       let url = `/connect/${p}?profileId=${profileId}`;
+      // HTTP query must match API (snake_case); Node SDK maps redirectUrl → this param
       if (redirectUrl) {
-        url += `&redirectUrl=${encodeURIComponent(redirectUrl)}`;
+        url += `&redirect_url=${encodeURIComponent(redirectUrl)}`;
       }
       return zernioFetch(url);
     },

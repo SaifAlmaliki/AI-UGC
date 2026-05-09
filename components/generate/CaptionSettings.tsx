@@ -6,10 +6,18 @@ import { generateCaptionAction } from '@/lib/actions/posts'
 
 const tones = ['Professional', 'Casual', 'Witty', 'Inspirational', 'Urgent']
 const ctas = ['Link in Bio', 'Shop Now', 'Tag a Friend', 'Comment Below', 'Sign Up']
-const languages = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Hindi']
+const languages = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Hindi', 'Arabic']
 const densities = ['Low', 'Medium', 'High']
 
-export default function CaptionSettings({ onChange, briefData }: { onChange: (data: any) => void, briefData?: any }) {
+export default function CaptionSettings({
+  onChange,
+  briefData,
+  visualData,
+}: {
+  onChange: (data: any) => void;
+  briefData?: any;
+  visualData?: any;
+}) {
   const [formData, setFormData] = useState({
     tone: 'Casual',
     cta: 'Link in Bio',
@@ -36,7 +44,8 @@ export default function CaptionSettings({ onChange, briefData }: { onChange: (da
         language: formData.language,
         hashtags: formData.hashtags,
         emojiDensity: formData.emojiDensity,
-        briefData
+        briefData,
+        visualData,
       })
       if (response.success && response.caption) {
         handleChange('caption', response.caption)

@@ -78,7 +78,7 @@ function PostGeneratorContent() {
     try {
       const result = await generatePostAction({
         ...formData,
-        prompt: formData.prompt || 'Influencer posing in studio, high fashion'
+        prompt: formData.prompt,
       })
       if (result.success) {
         setGeneratedImages(result.variants || [])
@@ -138,7 +138,11 @@ function PostGeneratorContent() {
           </section>
 
           <section className="glass rounded-3xl p-8 space-y-8 shadow-xl">
-            <CaptionSettings onChange={handleCaptionChange} briefData={formData.briefData} />
+            <CaptionSettings
+              onChange={handleCaptionChange}
+              briefData={formData.briefData}
+              visualData={formData.visualData}
+            />
           </section>
 
           <section className="glass rounded-3xl p-8 space-y-6 shadow-xl">
@@ -178,11 +182,11 @@ function PostGeneratorContent() {
                   rows={4}
                   value={formData.prompt}
                   onChange={(e) => setFormData(p => ({ ...p, prompt: e.target.value }))}
-                  placeholder="The AI will use your brief above, but you can override or add specific details here..."
+                  placeholder="Optional: extra photography notes. The image prompt already includes your content brief and visual direction above."
                   className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none shadow-inner"
                 />
                 <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                   <div className="text-[10px] text-slate-500 font-medium">Prompt refined by Gemini</div>
+                   <div className="text-[10px] text-slate-500 font-medium">Brief + art direction + notes</div>
                 </div>
               </div>
             </div>

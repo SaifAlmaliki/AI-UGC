@@ -7,6 +7,150 @@ import { zernio } from '../zernio';
 
 const LUMA_API_BASE = 'https://agents.lumalabs.ai/v1';
 
+type BriefDataInput = {
+  campaignName?: string;
+  product?: string;
+  goal?: string;
+  brief?: string;
+};
+
+type VisualDataInput = {
+  scene?: string;
+  outfit?: string;
+  lighting?: string;
+  props?: string[];
+};
+
+type ModelRowForPost = {
+  portrait_image_url: string | null;
+  full_body_image_url: string | null;
+  name: string;
+  prompt: string | null;
+  gender: string | null;
+  vibe_aesthetic: string | null;
+  hair_style_color: string | null;
+  skin_tone: string | null;
+  body_type: string | null;
+  age_range: string | null;
+};
+
+/** Leading block so scene/style text does not override the selected model identity (Luma has no Gemini-style wrapper). */
+function buildPostImageIdentityPreamble(m: ModelRowForPost): string {
+  const lines: string[] = [
+    'PRIMARY SUBJECT — IDENTITY LOCK: Depict exactly the same person as in the first reference image.',
+    'If a second reference image is provided, it is a full-body view of the same individual — use both for identity consistency.',
+    'Preserve facial structure, skin tone, hair, age, gender presentation, and distinctive features. Do not substitute a different person or a generic stock model.',
+  ];
+
+  if (m.name?.trim()) {
+    lines.push(`Character label: ${m.name.trim()}.`);
+  }
+
+  const attrs = [
+    m.gender?.trim() && `Gender presentation: ${m.gender.trim()}`,
+    m.age_range?.trim() && `Age range: ${m.age_range.trim()}`,
+    m.skin_tone?.trim() && `Skin tone: ${m.skin_tone.trim()}`,
+    m.body_type?.trim() && `Body type: ${m.body_type.trim()}`,
+    m.hair_style_color?.trim() && `Hair: ${m.hair_style_color.trim()}`,
+    m.vibe_aesthetic?.trim() && `Aesthetic: ${m.vibe_aesthetic.trim()}`,
+  ].filter(Boolean) as string[];
+
+  if (attrs.length) {
+    lines.push(attrs.join('. ') + '.');
+  }
+
+  if (m.prompt?.trim()) {
+    lines.push(`Character description: ${m.prompt.trim()}`);
+  }
+
+  lines.push(
+    'All details below describe setting, wardrobe mood, lighting, and campaign context only — apply them to this person, not a new subject.'
+  );
+
+  return lines.join(' ');
+}
+
+function summarizeUrlsForDevLog(urls: string[]): string {
+  return urls
+    .map((u) => {
+      try {
+        const url = new URL(u);
+        const segments = url.pathname.split('/').filter(Boolean);
+        const last = segments.pop() || '';
+        return `${url.hostname}/…/${last}`;
+      } catch {
+        return '(unparseable-url)';
+      }
+    })
+    .join(' | ');
+}
+
+/** Compose image prompt from Content Brief + Visual Direction (create-post form). */
+function buildPostImagePromptFromForm(
+  briefData?: BriefDataInput | null,
+  visualData?: VisualDataInput | null
+): string {
+  const scene = visualData?.scene?.trim() || 'Studio';
+  const outfit = visualData?.outfit?.trim() || 'Casual';
+  const lighting = visualData?.lighting?.trim() || 'Soft Studio';
+  const props = Array.isArray(visualData?.props)
+    ? visualData.props.filter((p): p is string => typeof p === 'string' && p.length > 0)
+    : [];
+
+  const sentences: string[] = [
+    'Photorealistic influencer content for social media.',
+    `Setting: ${scene.toLowerCase()} environment. Wardrobe mood: ${outfit.toLowerCase()}. Lighting: ${lighting}.`,
+  ];
+
+  if (props.length) {
+    sentences.push(`Naturally incorporate these props in the frame: ${props.join(', ')}.`);
+  }
+
+  const b = briefData || {};
+  if (b.product?.trim()) {
+    sentences.push(`Feature or showcase the product/brand: ${b.product.trim()}.`);
+  }
+  if (b.campaignName?.trim()) {
+    sentences.push(`Campaign theme: ${b.campaignName.trim()}.`);
+  }
+  if (b.goal?.trim()) {
+    sentences.push(`The shot should suit a "${b.goal.trim()}" marketing goal (engaging, on-brand).`);
+  }
+  if (b.brief?.trim()) {
+    const briefText = b.brief.trim();
+    const hasClosingPunctuation = /[.!?…]$/.test(briefText);
+    sentences.push(`Creative brief: ${briefText}${hasClosingPunctuation ? '' : '.'}`);
+  }
+
+  sentences.push(
+    'Pose naturally and expressively; professional commercial photography; wardrobe mood describes clothing styling for the locked subject above — not a different person.'
+  );
+
+  return sentences.join(' ');
+}
+
+function formatVisualContextForCaption(v?: VisualDataInput | null): string {
+  if (!v || typeof v !== 'object') return '';
+  const props = Array.isArray(v.props) ? v.props.filter(Boolean).join(', ') : '';
+  const bits = [
+    v.scene && `Scene: ${v.scene}`,
+    v.outfit && `Outfit mood: ${v.outfit}`,
+    v.lighting && `Lighting: ${v.lighting}`,
+    props && `Props: ${props}`,
+  ].filter(Boolean);
+  return bits.length ? bits.join('. ') + '.' : '';
+}
+
+/** Stronger language rules so non-Latin outputs (e.g. Arabic) match the selected locale. */
+function captionLanguageInstructions(language: string): string {
+  const lang = (language || '').trim();
+  if (lang.toLowerCase() === 'arabic') {
+    return `- Write the ENTIRE caption in Arabic script (Modern Standard Arabic / فصحى), with natural social-media phrasing.
+- Do not write the main body in English; keep hashtags in Latin if that matches common platform practice, but all sentence-level copy must be Arabic (except unavoidable brand names or product names the user gave in Latin).`;
+  }
+  return `- Write the ENTIRE caption in ${lang || 'the selected language'}, with natural social-media phrasing.`;
+}
+
 async function lumaFetch(endpoint: string, options: RequestInit = {}) {
   const apiKey = (process.env.LUMA_AGENTS_API_KEY || process.env.NEXT_PUBLIC_LUMA_AGENTS_API_KEY)?.trim();
   if (!apiKey) throw new Error('LUMA_AGENTS_API_KEY is not set.');
@@ -55,24 +199,31 @@ async function uploadToSupabase(buffer: Buffer, fileName: string) {
   }
 }
 
-async function generateLumaPost(prompt: string, aspectRatio: string = '1:1', modelImage?: string, referenceImages: string[] = []) {
-  // Combine character (modelImage) and style/context (referenceImages)
-  const allImages = [];
-  if (modelImage) allImages.push(modelImage);
-  if (referenceImages && referenceImages.length > 0) {
-    allImages.push(...referenceImages);
-  }
+async function generateLumaPost(
+  prompt: string,
+  aspectRatio: string = '1:1',
+  characterImageUrls: string[] = [],
+  referenceImages: string[] = []
+) {
+  const allImages = [...characterImageUrls, ...referenceImages];
 
-  const body: any = {
+  const body: Record<string, unknown> = {
     prompt,
-    aspect_ratio: aspectRatio
+    aspect_ratio: aspectRatio,
   };
 
-  // If we have images, pass them to Luma. Uni-1 supports multiple references.
+  // If we have images, pass them to Luma. Uni-1 supports multiple references (portrait, optional full-body, then user refs).
   if (allImages.length === 1) {
     body.image_prompt = allImages[0];
   } else if (allImages.length > 1) {
     body.image_prompt = allImages;
+  }
+
+  if (process.env.NODE_ENV !== 'production') {
+    const ip = body.image_prompt;
+    const kind = Array.isArray(ip) ? `array[len=${ip.length}]` : typeof ip === 'string' ? 'string' : 'none';
+    const urls = Array.isArray(ip) ? ip : typeof ip === 'string' ? [ip] : [];
+    console.log(`[Luma] image_prompt ${kind}: ${urls.length ? summarizeUrlsForDevLog(urls) : '(no reference images)'}`);
   }
 
   const generation = await lumaFetch('/generations', {
@@ -100,7 +251,12 @@ async function generateLumaPost(prompt: string, aspectRatio: string = '1:1', mod
   return await uploadToSupabase(buffer, `post-luma-${id}.png`);
 }
 
-async function generateGeminiPost(prompt: string, aspectRatio: string = '1:1', modelImage?: string, referenceImages: string[] = []) {
+async function generateGeminiPost(
+  prompt: string,
+  aspectRatio: string = '1:1',
+  characterImageUrls: string[] = [],
+  referenceImages: string[] = []
+) {
   const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY)?.trim();
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set.');
 
@@ -112,28 +268,28 @@ async function generateGeminiPost(prompt: string, aspectRatio: string = '1:1', m
       text: `Generate a high-quality ${aspectRatio} social media post image based on the provided visual references and this prompt: ${prompt}.
 
     STRICT REQUIREMENTS:
-    - IDENTITY: The first image provided (if any) is the character portrait. You MUST maintain the exact facial features, skin tone, and identity of this person.
-    - REFERENCE: Any subsequent images are for visual reference (style, pose, or background).
+    - IDENTITY: The first image (if any) is the character portrait. The second image (if any) is a full-body reference of the same person. You MUST maintain the exact facial features, skin tone, and identity — do not change gender, age, or ethnicity to match a scene stereotype.
+    - REFERENCE: Any further images are optional user references (style, pose, product, or background).
     - QUALITY: Cinematic lighting, professional photography, 8k resolution.` }
   ];
 
-  // Add influencer portrait as visual reference (Character)
-  if (modelImage) {
+  for (const url of characterImageUrls) {
+    if (!url) continue;
     try {
-      const response = await fetch(modelImage);
+      const response = await fetch(url);
       const buffer = await response.arrayBuffer();
+      const mimeType = response.headers.get('content-type') || 'image/png';
       parts.push({
         inlineData: {
           data: Buffer.from(buffer).toString('base64'),
-          mimeType: 'image/png'
+          mimeType: mimeType.startsWith('image/') ? mimeType : 'image/png',
         }
       });
     } catch (e) {
-      console.warn('Failed to fetch model image for Gemini:', e);
+      console.warn('Failed to fetch character image for Gemini:', e);
     }
   }
 
-  // Add additional reference images
   for (const ref of referenceImages) {
     if (ref.startsWith('data:')) {
       const [mime, data] = ref.split(';base64,');
@@ -171,10 +327,15 @@ async function generateGeminiPost(prompt: string, aspectRatio: string = '1:1', m
   return await uploadToSupabase(buffer, `post-gemini-${Date.now()}.png`);
 }
 
-async function generateVariant(prompt: string, aspectRatio: string = '1:1', modelImage?: string, referenceImages: string[] = []) {
+async function generateVariant(
+  prompt: string,
+  aspectRatio: string = '1:1',
+  characterImageUrls: string[] = [],
+  referenceImages: string[] = []
+) {
   try {
     console.log(`Attempting Luma generation for: ${prompt}`);
-    return await generateLumaPost(prompt, aspectRatio, modelImage, referenceImages);
+    return await generateLumaPost(prompt, aspectRatio, characterImageUrls, referenceImages);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     const lumaUnavailable =
@@ -186,7 +347,7 @@ async function generateVariant(prompt: string, aspectRatio: string = '1:1', mode
       console.warn('Luma post generation failed, falling back to Gemini:', error)
     }
     try {
-      return await generateGeminiPost(prompt, aspectRatio, modelImage, referenceImages);
+      return await generateGeminiPost(prompt, aspectRatio, characterImageUrls, referenceImages);
     } catch (geminiError: any) {
       console.error('Gemini fallback also failed:', geminiError);
       throw new Error(`Both Luma and Gemini failed: ${geminiError.message}`);
@@ -248,7 +409,9 @@ export async function generatePostAction(data: any) {
 
     const { data: modelData, error: modelError } = await adminSupabase
       .from('models')
-      .select('portrait_image_url')
+      .select(
+        'portrait_image_url, full_body_image_url, name, prompt, gender, vibe_aesthetic, hair_style_color, skin_tone, body_type, age_range'
+      )
       .eq('id', data.modelId)
       .single();
 
@@ -256,7 +419,19 @@ export async function generatePostAction(data: any) {
       return { success: false, error: 'Selected model not found. Please select a valid influencer model.' };
     }
 
-    const modelImage = modelData.portrait_image_url;
+    const row = modelData as ModelRowForPost;
+    const portrait = row.portrait_image_url?.trim();
+    if (!portrait) {
+      return { success: false, error: 'Selected model has no portrait image. Regenerate or pick another model.' };
+    }
+
+    const characterImageUrls = [
+      ...new Set(
+        [portrait, row.full_body_image_url?.trim()].filter(
+          (u): u is string => typeof u === 'string' && u.length > 0
+        )
+      ),
+    ];
 
     // 2. Deduct credits
     const { data: profile } = await adminSupabase.from('profiles').select('credits').eq('id', user.id).single();
@@ -264,7 +439,11 @@ export async function generatePostAction(data: any) {
 
     await adminSupabase.from('profiles').update({ credits: profile.credits - 10 }).eq('id', user.id);
 
-    const prompt = data.prompt;
+    const identityPreamble = buildPostImageIdentityPreamble(row);
+    const fromForm = buildPostImagePromptFromForm(data.briefData, data.visualData);
+    const userNotes = typeof data.prompt === 'string' ? data.prompt.trim() : '';
+    const sceneBlock = userNotes ? `${fromForm}\n\nAdditional direction: ${userNotes}` : fromForm;
+    const prompt = `${identityPreamble}\n\n${sceneBlock}`;
     const aspectRatio = data.format === 'story' ? '9:16' : data.format === 'landscape' ? '16:9' : '1:1';
 
     // 3. Process reference images (upload base64 to Supabase if needed)
@@ -280,7 +459,7 @@ export async function generatePostAction(data: any) {
 
     // Generate 1 variant
     const results = await Promise.all([
-      generateVariant(prompt, aspectRatio, modelImage, referenceImages),
+      generateVariant(prompt, aspectRatio, characterImageUrls, referenceImages),
     ]);
 
     return {
@@ -547,6 +726,7 @@ export async function generateCaptionAction(params: {
   hashtags: number;
   emojiDensity: string;
   briefData?: any;
+  visualData?: VisualDataInput | null;
 }) {
   const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY)?.trim();
   if (!apiKey) return { success: false, error: 'GEMINI_API_KEY is not set.' };
@@ -555,9 +735,11 @@ export async function generateCaptionAction(params: {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
+    const visualLine = formatVisualContextForCaption(params.visualData);
     const prompt = `Generate a social media caption with the following requirements:
 - Tone: ${params.tone}
 - Language: ${params.language}
+${captionLanguageInstructions(params.language)}
 - Call to Action: ${params.cta}
 - Number of hashtags: ${params.hashtags}
 - Emoji Density: ${params.emojiDensity}
@@ -565,6 +747,7 @@ ${params.briefData?.campaignName ? `- Campaign Name: ${params.briefData.campaign
 ${params.briefData?.product ? `- Product/Brand: ${params.briefData.product}` : ''}
 ${params.briefData?.goal ? `- Goal: ${params.briefData.goal}` : ''}
 ${params.briefData?.brief ? `- Detailed Brief: ${params.briefData.brief}` : ''}
+${visualLine ? `- Visual context (caption should loosely match this imagery): ${visualLine}` : ''}
 
 Please return ONLY the generated caption text. Do not include any quotes or prefixes.`;
 

@@ -5,6 +5,12 @@ import { createAdminClient } from '../supabase/admin';
 import { zernio } from '../zernio';
 import { revalidatePath } from 'next/cache';
 
+function zernioProfileIdFromItem(p: Record<string, unknown>): string | null {
+  if (typeof p._id === 'string') return p._id;
+  if (typeof p.id === 'string') return p.id;
+  return null;
+}
+
 export async function getSocialConnectUrlAction(platform: string, origin: string) {
   try {
     const supabase = await createClient();
@@ -41,17 +47,55 @@ export async function getSocialConnectUrlAction(platform: string, origin: string
     }
 
     let zernioProfileId = profile.zernio_profile_id;
+    const zernioDescription = `InfluencerAI profile for user ${user.id}`;
+    const legacyZernioName = `Profile for ${profile.email}`;
+    const zernioProfileName = `InfluencerAI · ${user.id}`;
 
-    // 2. Create Zernio Profile if it doesn't exist
+    // 2. Ensure a Zernio profile exists (API keys are per-project; names must be unique)
     if (!zernioProfileId) {
-      const zProfileResponse = await zernio.profiles.create(
-        `Profile for ${profile.email}`,
-        `InfluencerAI profile for user ${user.id}`
-      );
-      
-      zernioProfileId = zProfileResponse.profile._id;
+      const { profiles } = await zernio.profiles.list();
+      const existing = profiles.find((p) => {
+        const name = typeof p.name === 'string' ? p.name : '';
+        const desc = typeof p.description === 'string' ? p.description : '';
+        return (
+          desc === zernioDescription ||
+          desc.includes(user.id) ||
+          name === legacyZernioName ||
+          name === zernioProfileName
+        );
+      });
 
-      // Update local profile
+      const fromList = existing ? zernioProfileIdFromItem(existing) : null;
+
+      if (fromList) {
+        zernioProfileId = fromList;
+      } else {
+        try {
+          const zProfileResponse = await zernio.profiles.create(zernioProfileName, zernioDescription);
+          zernioProfileId = zProfileResponse.profile._id;
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : '';
+          if (msg.includes('already exists')) {
+            const { profiles: again } = await zernio.profiles.list();
+            const recovered = again.find((p) => {
+              const name = typeof p.name === 'string' ? p.name : '';
+              const desc = typeof p.description === 'string' ? p.description : '';
+              return (
+                desc === zernioDescription ||
+                desc.includes(user.id) ||
+                name === legacyZernioName ||
+                name === zernioProfileName
+              );
+            });
+            const rid = recovered ? zernioProfileIdFromItem(recovered) : null;
+            if (!rid) throw e;
+            zernioProfileId = rid;
+          } else {
+            throw e;
+          }
+        }
+      }
+
       await adminSupabase
         .from('profiles')
         .update({ zernio_profile_id: zernioProfileId })
