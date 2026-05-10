@@ -9,7 +9,7 @@ const plans = [
   {
     name: "Free",
     price: "$0",
-    description: "Perfect for getting started with AI Influencers.",
+    description: "Perfect for getting started with Kyvello.",
     features: [
       "300 Credits (initial)",
       "50 Credits / AI Influencer Create",

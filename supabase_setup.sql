@@ -1,4 +1,4 @@
--- AI-UGC / AI Influencer — full Supabase schema aligned with this repo
+-- Kyvello / AI creator studio — Supabase schema aligned with this repo
 -- Run in: Supabase Dashboard → SQL Editor
 -- Prerequisites: Auth enabled (auth.users). gen_random_uuid() is available by default.
 
@@ -44,8 +44,11 @@ create table if not exists public.posts (
   caption text,
   status text default 'draft',
   scheduled_at timestamptz,
+  post_format text,
   created_at timestamptz not null default (now() at time zone 'utc')
 );
+
+alter table public.posts add column if not exists post_format text;
 
 create table if not exists public.social_accounts (
   id uuid primary key default gen_random_uuid(),

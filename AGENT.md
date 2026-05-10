@@ -1,7 +1,7 @@
-# Agent Instructions: AI Influencer Generator
+# Agent Instructions: Kyvello (AI Creator Studio)
 
 ## Project Overview
-You are building a high-fidelity AI Influencer platform. The core workflow involves generating video content via Luma AI, storing it in Supabase, and scheduling posts to social media via Zernio. 
+You are building Kyvello, a high-fidelity AI influencer and content studio. The core workflow involves generating video content via Luma AI, storing it in Supabase, and scheduling posts to social media via Zernio. 
 
 ## Technical Stack Guidelines
 

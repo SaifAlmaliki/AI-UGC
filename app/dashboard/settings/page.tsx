@@ -77,7 +77,7 @@ export default function SettingsPage() {
       <div className="space-y-6">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-foreground">Pricing Models</h2>
-          <p className="text-muted-foreground mt-2">Choose the right plan to supercharge your AI Influencer journey.</p>
+          <p className="text-muted-foreground mt-2">Choose the right plan to supercharge your Kyvello workspace.</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 pt-6">
@@ -89,7 +89,7 @@ export default function SettingsPage() {
                 $0
                 <span className="ml-1 text-xl font-medium text-muted-foreground">/month</span>
               </div>
-              <p className="mt-4 text-muted-foreground">Perfect for getting started with AI Influencers.</p>
+              <p className="mt-4 text-muted-foreground">Perfect for getting started with Kyvello.</p>
             </div>
             <ul className="flex-1 space-y-4 text-foreground">
               <li className="flex items-center"><Check className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 shrink-0" /> 300 Credits (initial)</li>

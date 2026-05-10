@@ -2,6 +2,7 @@ import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { BRAND_NAME } from '@/lib/brand'
 import {
   LayoutDashboard,
   Sparkles,
@@ -44,8 +45,8 @@ export default async function DashboardLayout({
               <Sparkles className="text-primary-foreground w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl font-bold text-foreground tracking-tight truncate">InfluencerAI</h1>
-              <p className="text-[10px] text-primary font-bold uppercase tracking-widest">Platform</p>
+              <h1 className="text-xl font-bold text-foreground tracking-tight truncate">{BRAND_NAME}</h1>
+              <p className="text-[10px] text-primary font-bold uppercase tracking-widest">Studio</p>
             </div>
           </div>
           <ThemeToggle className="h-9 w-9" />
@@ -94,7 +95,7 @@ export default async function DashboardLayout({
         <header className="lg:hidden h-16 flex items-center justify-between px-6 border-b border-border glass sticky top-0 z-50 gap-4">
           <div className="flex items-center gap-2">
             <Sparkles className="text-primary w-6 h-6" />
-            <span className="font-bold text-foreground truncate">InfluencerAI</span>
+            <span className="font-bold text-foreground truncate">{BRAND_NAME}</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ThemeToggle className="h-9 w-9" />

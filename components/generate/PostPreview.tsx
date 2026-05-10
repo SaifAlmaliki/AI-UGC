@@ -3,15 +3,18 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, User } from 'lucide-react'
+import { BRAND_NAME } from '@/lib/brand'
 
 interface PostPreviewProps {
   platform: string
   format: string
   imageUrls: string[]
   caption: string
+  /** Defaults to image; use video when previewing uploaded video */
+  mediaType?: 'image' | 'video'
 }
 
-export default function PostPreview({ platform, format, imageUrls, caption }: PostPreviewProps) {
+export default function PostPreview({ platform, format, imageUrls, caption, mediaType = 'image' }: PostPreviewProps) {
   const [activeVariant, setActiveVariant] = useState(0)
 
   // Determine aspect ratio class based on format
@@ -74,7 +77,7 @@ export default function PostPreview({ platform, format, imageUrls, caption }: Po
                 </div>
               </div>
               <div>
-                <p className="text-xs font-bold text-white">influencer_ai</p>
+                <p className="text-xs font-bold text-white">{BRAND_NAME.toLowerCase()}</p>
                 <p className="text-[10px] text-slate-500">Sponsored</p>
               </div>
             </div>
@@ -82,13 +85,24 @@ export default function PostPreview({ platform, format, imageUrls, caption }: Po
             {/* Main Image */}
             <div className={`relative w-full ${getAspectClass()} bg-slate-900/50`}>
               {imageUrls[activeVariant] ? (
-                <Image
-                  src={imageUrls[activeVariant]}
-                  alt="Post Preview"
-                  fill
-                  sizes="(max-width: 448px) 100vw, 400px"
-                  className="object-cover"
-                />
+                mediaType === 'video' ? (
+                  <video
+                    key={imageUrls[activeVariant]}
+                    src={imageUrls[activeVariant]}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    controls
+                    playsInline
+                    muted
+                  />
+                ) : (
+                  <Image
+                    src={imageUrls[activeVariant]}
+                    alt="Post Preview"
+                    fill
+                    sizes="(max-width: 448px) 100vw, 400px"
+                    className="object-cover"
+                  />
+                )
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-700 gap-3">
                   <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-slate-700 flex items-center justify-center">
@@ -111,7 +125,7 @@ export default function PostPreview({ platform, format, imageUrls, caption }: Po
               </div>
               <p className="text-xs font-bold text-white mb-1">1,245 likes</p>
               <p className="text-xs text-white leading-relaxed">
-                <span className="font-bold mr-2">influencer_ai</span>
+                <span className="font-bold mr-2">{BRAND_NAME.toLowerCase()}</span>
                 {caption}
               </p>
               <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-tight">2 hours ago</p>

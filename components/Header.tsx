@@ -45,7 +45,7 @@ export const Header = () => {
           <Sparkles className="w-5 h-5 text-white" />
         </div>
         <span className="text-xl font-bold font-display tracking-tight text-foreground">
-          Influencer<span className="text-primary">AI</span>
+          Kyvel<span className="text-primary">lo</span>
         </span>
       </Link>
 

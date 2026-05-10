@@ -8,6 +8,7 @@ import Link from "next/link";
 import { createClient } from "../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { BRAND_NAME } from "@/lib/brand";
 
 
 export default function LoginPage() {
@@ -96,7 +97,7 @@ export default function LoginPage() {
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <span className="text-2xl font-bold font-display tracking-tight text-foreground">
-            Influencer<span className="text-primary">AI</span>
+            Kyvel<span className="text-primary">lo</span>
           </span>
         </Link>
 
@@ -107,8 +108,8 @@ export default function LoginPage() {
             </h1>
             <p className="text-muted-foreground text-sm">
               {isSignUp
-                ? "Join 1,200+ creators scaling their presence"
-                : "Sign in to continue your AI journey"}
+                ? `Join 1,200+ creators on ${BRAND_NAME}`
+                : `Sign in to ${BRAND_NAME}`}
             </p>
           </div>
 

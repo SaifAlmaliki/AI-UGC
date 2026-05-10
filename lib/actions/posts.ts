@@ -173,13 +173,13 @@ async function lumaFetch(endpoint: string, options: RequestInit = {}) {
   return response.json();
 }
 
-async function uploadToSupabase(buffer: Buffer, fileName: string) {
+async function uploadToSupabase(buffer: Buffer, fileName: string, contentType: string = 'image/png') {
   try {
     const supabase = createAdminClient();
     const { data, error } = await supabase.storage
       .from('posts')
       .upload(fileName, buffer, {
-        contentType: 'image/png',
+        contentType,
         upsert: true
       });
 
@@ -196,6 +196,154 @@ async function uploadToSupabase(buffer: Buffer, fileName: string) {
   } catch (err: any) {
     console.error('Error in uploadToSupabase:', err);
     throw err;
+  }
+}
+
+function extensionForMime(mime: string): string {
+  const m = mime.toLowerCase();
+  if (m.includes('webm')) return 'webm';
+  if (m.includes('quicktime')) return 'mov';
+  if (m.startsWith('video/')) return 'mp4';
+  if (m.includes('jpeg') || m.includes('jpg')) return 'jpg';
+  if (m.includes('webp')) return 'webp';
+  if (m.includes('gif')) return 'gif';
+  if (m.includes('png')) return 'png';
+  return 'bin';
+}
+
+function mediaKindFromMime(mime: string): 'image' | 'video' {
+  return mime.toLowerCase().startsWith('video/') ? 'video' : 'image';
+}
+
+/** Best-effort type for Zernio when missing explicit metadata (URL may omit extension). */
+function inferMediaKindFromUrl(url: string): 'image' | 'video' {
+  try {
+    const path = new URL(url).pathname.toLowerCase();
+    if (/\.(mp4|webm|mov|m4v|mkv)(\?|$)/i.test(path)) return 'video';
+  } catch {
+    const lower = url.toLowerCase();
+    if (/\.(mp4|webm|mov|m4v|mkv)(\?|$)/i.test(lower)) return 'video';
+  }
+  return 'image';
+}
+
+/** Instagram feed allows width/height roughly 0.75–1.91; below that, use Story (see Zernio docs). */
+const INSTAGRAM_FEED_MIN_ASPECT = 0.75;
+
+function probeImageDimensionsFromBuffer(buffer: Buffer): { w: number; h: number } | null {
+  if (
+    buffer.length >= 24 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47
+  ) {
+    const w = buffer.readUInt32BE(16);
+    const h = buffer.readUInt32BE(20);
+    if (w > 0 && h > 0) return { w, h };
+    return null;
+  }
+  if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) return null;
+  let offset = 2;
+  while (offset + 9 < buffer.length) {
+    if (buffer[offset] !== 0xff) {
+      offset += 1;
+      continue;
+    }
+    const marker = buffer[offset + 1];
+    if (marker === 0xc0 || marker === 0xc1 || marker === 0xc2) {
+      const h = buffer.readUInt16BE(offset + 5);
+      const w = buffer.readUInt16BE(offset + 7);
+      if (w > 0 && h > 0) return { w, h };
+      return null;
+    }
+    if (marker === 0xd8 || marker === 0xd9) {
+      offset += 2;
+      continue;
+    }
+    const segLen = buffer.readUInt16BE(offset + 2);
+    offset += 2 + segLen;
+  }
+  return null;
+}
+
+async function fetchImageAspectRatioFromUrl(url: string): Promise<number | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { Range: 'bytes=0-262143' },
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const dim = probeImageDimensionsFromBuffer(Buffer.from(await res.arrayBuffer()));
+    if (!dim) return null;
+    return dim.w / dim.h;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Instagram feed vs Story/Reels — Zernio requires platformSpecificData.contentType
+ * for tall "story-shaped" media that is not valid as a feed post.
+ */
+async function buildInstagramPlatformSpecificData(
+  mediaUrl: string,
+  mediaKind: 'image' | 'video',
+  postFormat?: string | null
+): Promise<Record<string, unknown> | undefined> {
+  if (postFormat === 'story') {
+    if (mediaKind === 'video') {
+      return { contentType: 'reels', shareToFeed: true };
+    }
+    return { contentType: 'story' };
+  }
+  if (mediaKind === 'image') {
+    const ratio = await fetchImageAspectRatioFromUrl(mediaUrl);
+    if (ratio !== null && ratio < INSTAGRAM_FEED_MIN_ASPECT) {
+      return { contentType: 'story' };
+    }
+  }
+  return undefined;
+}
+
+export async function uploadUserPostMediaAction(dataUrl: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const match = String(dataUrl).match(/^data:([^;,]+);base64,(.+)$/);
+    if (!match) {
+      return { success: false, error: 'Invalid image or video data' };
+    }
+
+    const mime = match[1].trim();
+    const base64 = match[2];
+    const buffer = Buffer.from(base64, 'base64');
+
+    const maxBytes = 1024 * 1024;
+    if (buffer.length > maxBytes) {
+      return { success: false, error: 'File is too large (max 1 MB)' };
+    }
+
+    const isVideo = mediaKindFromMime(mime) === 'video';
+    if (!mime.startsWith('image/') && !mime.startsWith('video/')) {
+      return { success: false, error: 'Only image or video files are supported' };
+    }
+
+    const ext = extensionForMime(mime);
+    const fileName = `user-upload/${user.id}-${Date.now()}.${ext}`;
+
+    const publicUrl = await uploadToSupabase(buffer, fileName, mime);
+
+    return {
+      success: true,
+      url: publicUrl,
+      mediaType: (isVideo ? 'video' : 'image') as 'image' | 'video',
+    };
+  } catch (error: any) {
+    console.error('uploadUserPostMediaAction', error);
+    return { success: false, error: error.message || 'Upload failed' };
   }
 }
 
@@ -355,10 +503,17 @@ async function generateVariant(
   }
 }
 
-async function scheduleToZernio(userId: string, platform: string, imageUrl: string, caption: string, scheduledAt?: string) {
+async function scheduleToZernio(
+  userId: string,
+  platform: string,
+  mediaUrl: string,
+  caption: string,
+  scheduledAt?: string,
+  mediaKind: 'image' | 'video' = 'image',
+  postFormat?: string | null
+) {
   const adminSupabase = createAdminClient();
 
-  // 1. Fetch connected accounts for this platform
   const { data: accounts } = await adminSupabase
     .from('social_accounts')
     .select('zernio_account_id')
@@ -370,29 +525,30 @@ async function scheduleToZernio(userId: string, platform: string, imageUrl: stri
     return;
   }
 
-  // 2. Prepare platforms array for Zernio
-  const zernioPlatforms = accounts.map(acc => ({
+  let instagramPsd: Record<string, unknown> | undefined;
+  if (platform.toLowerCase() === 'instagram') {
+    instagramPsd = await buildInstagramPlatformSpecificData(mediaUrl, mediaKind, postFormat);
+  }
+
+  const zernioPlatforms = accounts.map((acc) => ({
     platform: platform.toLowerCase(),
-    accountId: acc.zernio_account_id
+    accountId: acc.zernio_account_id,
+    ...(instagramPsd ? { platformSpecificData: instagramPsd } : {}),
   }));
 
-  // 3. Call Zernio API
   try {
     const postResponse = await zernio.posts.createPost({
       content: caption || '',
       scheduledFor: scheduledAt,
       publishNow: !scheduledAt,
-      timezone: 'UTC', // Defaulting to UTC
-      mediaItems: [
-        { url: imageUrl, type: 'image' }
-      ],
-      platforms: zernioPlatforms
+      timezone: 'UTC',
+      mediaItems: [{ url: mediaUrl, type: mediaKind }],
+      platforms: zernioPlatforms,
     });
     console.log('Post scheduled to Zernio:', postResponse.post?._id);
     return postResponse;
   } catch (error) {
     console.error('Failed to schedule post to Zernio:', error);
-    // We don't throw here to avoid breaking the local DB transaction/flow
   }
 }
 
@@ -449,10 +605,12 @@ export async function generatePostAction(data: any) {
     // 3. Process reference images (upload base64 to Supabase if needed)
     const referenceImages = await Promise.all((data.referenceImages || []).map(async (img: string, i: number) => {
       if (img.startsWith('data:')) {
-        const [mime, base64Data] = img.split(';base64,');
+        const [header, base64Data] = img.split(';base64,');
+        const mime = header.replace(/^data:/, '').trim() || 'image/png';
         const buffer = Buffer.from(base64Data, 'base64');
-        const fileName = `ref-${user.id}-${Date.now()}-${i}.png`;
-        return await uploadToSupabase(buffer, fileName);
+        const ext = extensionForMime(mime);
+        const fileName = `ref-${user.id}-${Date.now()}-${i}.${ext}`;
+        return await uploadToSupabase(buffer, fileName, mime);
       }
       return img;
     }));
@@ -483,12 +641,16 @@ export async function getModelsAction() {
 }
 
 export async function savePostAction(postData: {
-  modelId: string;
+  modelId: string | null;
   imageUrl: string;
   platform: string | string[];
   caption: string;
   status: 'draft' | 'scheduled' | 'published';
   scheduledAt?: string;
+  /** When omitted, inferred from URL when possible */
+  mediaType?: 'image' | 'video';
+  /** single | story | landscape | portrait — drives Instagram Story vs feed via Zernio */
+  postFormat?: string | null;
 }) {
   try {
     const supabase = await createClient();
@@ -524,8 +686,11 @@ export async function savePostAction(postData: {
       platform: platform,
       caption: postData.caption,
       status: postData.status,
-      scheduled_at: postData.scheduledAt || null
+      scheduled_at: postData.scheduledAt || null,
+      post_format: postData.postFormat ?? null,
     }));
+
+    const mediaKind = postData.mediaType ?? inferMediaKindFromUrl(postData.imageUrl);
 
     const { data, error } = await adminSupabase
       .from('posts')
@@ -545,7 +710,9 @@ export async function savePostAction(postData: {
           platform,
           postData.imageUrl,
           postData.caption,
-          postData.status === 'scheduled' ? postData.scheduledAt : undefined
+          postData.status === 'scheduled' ? postData.scheduledAt : undefined,
+          mediaKind,
+          postData.postFormat ?? null
         );
       }
     }
@@ -648,7 +815,9 @@ export async function updatePostAction(postId: string, updates: {
         data.platform,
         data.image_url,
         data.caption,
-        data.status === 'scheduled' ? data.scheduled_at : undefined
+        data.status === 'scheduled' ? data.scheduled_at : undefined,
+        inferMediaKindFromUrl(data.image_url),
+        (data as { post_format?: string | null }).post_format ?? null
       );
     }
 

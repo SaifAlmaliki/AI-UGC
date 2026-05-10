@@ -9,17 +9,31 @@ import VisualDirectionForm from '@/components/generate/VisualDirectionForm'
 import CaptionSettings from '@/components/generate/CaptionSettings'
 import PostPreview from '@/components/generate/PostPreview'
 import PostActions from '@/components/generate/PostActions'
-import { generatePostAction } from '@/lib/actions/posts'
+import { generatePostAction, uploadUserPostMediaAction } from '@/lib/actions/posts'
 import { getConnectedAccountsAction } from '@/lib/actions/social-accounts'
-import { Sparkles, Upload, X, Send, Wand2, Loader2 } from 'lucide-react'
+import { Upload, X, Wand2, Loader2, Users, ImagePlus } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Suspense } from 'react'
+
+type ContentSource = 'studio' | 'upload'
+
+/** Matches Next.js default Server Actions body limit for base64 uploads */
+const MAX_USER_MEDIA_BYTES = 1024 * 1024
 
 function PostGeneratorContent() {
   const searchParams = useSearchParams()
   const initialDate = searchParams.get('date') || ''
   const initialModelId = searchParams.get('modelId') || ''
+
+  const [contentSource, setContentSource] = useState<ContentSource>('studio')
+  const [uploadedMedia, setUploadedMedia] = useState<{
+    url: string
+    type: 'image' | 'video'
+  } | null>(null)
+  const [uploadingUserFile, setUploadingUserFile] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     modelId: initialModelId,
@@ -45,6 +59,16 @@ function PostGeneratorContent() {
   }, [fetchConnectedAccounts])
 
   const isPlatformConnected = connectedAccounts.length > 0
+
+  const setSource = (src: ContentSource) => {
+    setContentSource(src)
+    setUploadError(null)
+    if (src === 'studio') {
+      setUploadedMedia(null)
+    } else {
+      setGeneratedImages([])
+    }
+  }
 
   const handleModelSelect = useCallback((id: string) => {
     setFormData(prev => ({ ...prev, modelId: id }))
@@ -72,6 +96,7 @@ function PostGeneratorContent() {
   }, [])
 
   const handleGenerate = async () => {
+    if (contentSource !== 'studio') return
     setLoading(true)
     try {
       const result = await generatePostAction({
@@ -94,13 +119,79 @@ function PostGeneratorContent() {
       const reader = new FileReader()
       reader.onload = (event) => {
         setFormData(prev => ({
-          ...prev, 
+          ...prev,
           referenceImages: [...prev.referenceImages, event.target?.result as string].slice(0, 3)
         }))
       }
       reader.readAsDataURL(files[0])
     }
   }
+
+  const handleUserMediaFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) return
+
+    setUploadError(null)
+
+    if (file.size > MAX_USER_MEDIA_BYTES) {
+      setUploadError('Only files up to 1 MB are allowed. Choose a smaller image or video.')
+      return
+    }
+
+    setUploadingUserFile(true)
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = () => reject(new Error('read failed'))
+        reader.readAsDataURL(file)
+      })
+      const result = await uploadUserPostMediaAction(dataUrl)
+      if (result.success && result.url && result.mediaType) {
+        setUploadedMedia({ url: result.url, type: result.mediaType })
+        setGeneratedImages([])
+        setUploadError(null)
+      } else {
+        const msg = result.error || 'Upload failed'
+        setUploadError(
+          msg.includes('too large') || msg.includes('100 MB')
+            ? 'Only files up to 1 MB are allowed. Choose a smaller image or video.'
+            : msg
+        )
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      if (message.includes('Body exceeded') || message.includes('413')) {
+        setUploadError('Only files up to 1 MB are allowed. Choose a smaller image or video.')
+      } else {
+        setUploadError(message || 'Upload failed. Try a smaller file.')
+      }
+    } finally {
+      setUploadingUserFile(false)
+    }
+  }
+
+  const clearUserMedia = () => {
+    setUploadedMedia(null)
+    setUploadError(null)
+  }
+
+  const previewUrls =
+    contentSource === 'upload' && uploadedMedia
+      ? [uploadedMedia.url]
+      : generatedImages
+  const previewMediaType =
+    contentSource === 'upload' && uploadedMedia ? uploadedMedia.type : 'image'
+
+  const publishModelId = contentSource === 'studio' ? formData.modelId : null
+  const publishImageUrl =
+    contentSource === 'upload' ? uploadedMedia?.url || '' : generatedImages[0] || ''
+  const publishMediaType =
+    contentSource === 'upload' && uploadedMedia ? uploadedMedia.type : 'image'
+  const canPublish =
+    contentSource === 'upload' ? !!uploadedMedia?.url : generatedImages.length > 0
 
   return (
     <div className="min-h-screen">
@@ -112,16 +203,127 @@ function PostGeneratorContent() {
               AI Engine Active
             </div>
           </h1>
-          <p className="text-muted-foreground mt-2">Create viral social media content with AI influencers in seconds.</p>
+          <p className="text-muted-foreground mt-2">
+            Use a Studio model for AI-generated visuals, or upload your own photo or video for the post.
+          </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Left Column - Form */}
         <div className="lg:col-span-7 space-y-10">
           <section className="glass rounded-3xl p-8 space-y-8 shadow-xl">
-            <ModelPicker onSelect={handleModelSelect} initialModelId={initialModelId || null} />
-            <hr className="border-border/60 dark:border-white/5" />
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">Post media source</label>
+              <div className="flex rounded-2xl border border-border dark:border-white/10 p-1 bg-muted/50 dark:bg-white/5 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setSource('studio')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
+                    contentSource === 'studio'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  Studio model
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSource('upload')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
+                    contentSource === 'upload'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <ImagePlus className="w-4 h-4" />
+                  Your photo / video
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {contentSource === 'studio'
+                  ? 'An AI image is generated from your model and brief (uses credits).'
+                  : 'Your file is stored and used as the post media — no AI image generation or credit charge.'}
+              </p>
+            </div>
+
+            {contentSource === 'studio' ? (
+              <>
+                <ModelPicker onSelect={handleModelSelect} initialModelId={initialModelId || null} />
+                <hr className="border-border/60 dark:border-white/5" />
+              </>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Upload className="w-4 h-4 text-primary" />
+                      Upload media
+                    </label>
+                    {uploadingUserFile && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Uploading…
+                      </span>
+                    )}
+                  </div>
+                  {uploadedMedia ? (
+                    <div className="relative rounded-2xl overflow-hidden border border-border bg-black aspect-video max-h-64">
+                      {uploadedMedia.type === 'video' ? (
+                        <video
+                          src={uploadedMedia.url}
+                          className="w-full h-full object-contain max-h-64"
+                          controls
+                          playsInline
+                        />
+                      ) : (
+                        <div className="relative w-full aspect-video max-h-64">
+                          <Image
+                            src={uploadedMedia.url}
+                            alt="Uploaded"
+                            fill
+                            className="object-contain"
+                            sizes="(max-width: 768px) 100vw, 640px"
+                          />
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={clearUserMedia}
+                        className="absolute top-2 right-2 w-9 h-9 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80"
+                        aria-label="Remove upload"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/30 dark:bg-white/5 py-14 cursor-pointer hover:border-primary/40 transition-colors">
+                      <Upload className="w-8 h-8 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">
+                        Choose image or video
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        PNG, JPG, WebP, MP4, WebM — maximum 1 MB per file
+                      </span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*,video/*"
+                        onChange={handleUserMediaFile}
+                        disabled={uploadingUserFile}
+                      />
+                    </label>
+                  )}
+                  {uploadError && (
+                    <p className="text-sm text-red-400 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3">
+                      {uploadError}
+                    </p>
+                  )}
+                </div>
+                <hr className="border-border/60 dark:border-white/5" />
+              </>
+            )}
+
             <PlatformTabs onSelect={handlePlatformSelect} connectedAccounts={connectedAccounts} />
             <hr className="border-border/60 dark:border-white/5" />
             <PostFormatSelector onSelect={handleFormatSelect} />
@@ -143,88 +345,109 @@ function PostGeneratorContent() {
             />
           </section>
 
-          <section className="glass rounded-3xl p-8 space-y-6 shadow-xl">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Upload className="w-4 h-4 text-primary" />
-                Reference Images
-              </label>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Max 3 Images</span>
-            </div>
-
-            <div className="flex gap-4">
-              {formData.referenceImages.map((img, i) => (
-                <div key={i} className="relative w-24 h-24 rounded-2xl overflow-hidden border border-border group">
-                  <Image src={img} alt="ref" fill sizes="96px" className="object-cover" />
-                  <button 
-                    onClick={() => setFormData(prev => ({ ...prev, referenceImages: prev.referenceImages.filter((_, idx) => idx !== i) }))}
-                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 dark:bg-black/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-3 h-3 text-primary-foreground" />
-                  </button>
-                </div>
-              ))}
-              {formData.referenceImages.length < 3 && (
-                <label className="w-24 h-24 rounded-2xl border-2 border-dashed border-border bg-muted dark:bg-white/5 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/80 dark:hover:bg-white/10 hover:border-primary/30 transition-all group">
-                  <Upload className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                  <span className="text-[10px] text-muted-foreground mt-2">Upload</span>
-                  <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+          {contentSource === 'studio' ? (
+            <section className="glass rounded-3xl p-8 space-y-6 shadow-xl">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-primary" />
+                  Reference Images
                 </label>
-              )}
-            </div>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                  Max 3 Images
+                </span>
+              </div>
 
-            <div className="space-y-2">
-              <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">AI Prompt Instruction (Editable)</p>
-              <div className="relative">
-                <textarea
-                  rows={4}
-                  value={formData.prompt}
-                  onChange={(e) => setFormData(p => ({ ...p, prompt: e.target.value }))}
-                  placeholder="Optional: extra photography notes. The image prompt already includes your content brief and visual direction above."
-                  className="w-full bg-muted dark:bg-slate-900/50 border border-border dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none shadow-inner"
-                />
-                <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                   <div className="text-[10px] text-muted-foreground font-medium">Brief + art direction + notes</div>
+              <div className="flex gap-4">
+                {formData.referenceImages.map((img, i) => (
+                  <div key={i} className="relative w-24 h-24 rounded-2xl overflow-hidden border border-border group">
+                    <Image src={img} alt="ref" fill sizes="96px" className="object-cover" />
+                    <button
+                      onClick={() =>
+                        setFormData(prev => ({
+                          ...prev,
+                          referenceImages: prev.referenceImages.filter((_, idx) => idx !== i),
+                        }))
+                      }
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 dark:bg-black/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3 text-primary-foreground" />
+                    </button>
+                  </div>
+                ))}
+                {formData.referenceImages.length < 3 && (
+                  <label className="w-24 h-24 rounded-2xl border-2 border-dashed border-border bg-muted dark:bg-white/5 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/80 dark:hover:bg-white/10 hover:border-primary/30 transition-all group">
+                    <Upload className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <span className="text-[10px] text-muted-foreground mt-2">Upload</span>
+                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                  </label>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">
+                  AI Prompt Instruction (Editable)
+                </p>
+                <div className="relative">
+                  <textarea
+                    rows={4}
+                    value={formData.prompt}
+                    onChange={(e) => setFormData(p => ({ ...p, prompt: e.target.value }))}
+                    placeholder="Optional: extra photography notes. The image prompt already includes your content brief and visual direction above."
+                    className="w-full bg-muted dark:bg-slate-900/50 border border-border dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none shadow-inner"
+                  />
+                  <div className="absolute bottom-4 right-4 flex items-center gap-2">
+                    <div className="text-[10px] text-muted-foreground font-medium">Brief + art direction + notes</div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <button
-              onClick={handleGenerate}
-              disabled={loading}
-              className="w-full h-16 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold text-lg flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(14,165,233,0.3)] hover:shadow-[0_0_50px_rgba(14,165,233,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                  Generating Magic...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-                  Generate Post
-                </>
-              )}
-            </button>
-          </section>
+              <button
+                onClick={handleGenerate}
+                disabled={loading}
+                className="w-full h-16 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold text-lg flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(14,165,233,0.3)] hover:shadow-[0_0_50px_rgba(14,165,233,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    Generating Magic...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+                    Generate Post
+                  </>
+                )}
+              </button>
+            </section>
+          ) : (
+            <section className="glass rounded-3xl p-8 shadow-xl">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                When your upload looks good in the preview, use{' '}
+                <strong className="text-foreground">Post Actions</strong> to <strong className="text-foreground">Publish now</strong>, schedule for later, or save a draft. You can still tune the caption above.
+              </p>
+            </section>
+          )}
         </div>
 
         <div className="lg:col-span-5 space-y-6 sticky top-10 self-start">
-          <PostPreview 
+          <PostPreview
             platform={formData.platform[0] || 'instagram'}
             format={formData.format}
-            imageUrls={generatedImages}
+            imageUrls={previewUrls}
             caption={(formData.captionData as any)?.caption || ''}
+            mediaType={previewMediaType}
           />
-          {generatedImages.length > 0 && (
-            <PostActions 
-              modelId={formData.modelId}
-              imageUrl={generatedImages[0]} // Using first variant by default
+          {canPublish && publishImageUrl && (
+            <PostActions
+              modelId={publishModelId}
+              imageUrl={publishImageUrl}
               platform={formData.platform}
               caption={(formData.captionData as any)?.caption || ''}
               isPlatformConnected={isPlatformConnected}
               initialStatus={initialDate ? 'scheduled' : 'draft'}
               initialScheduledAt={initialDate ? `${initialDate}T12:00` : undefined}
+              mediaType={publishMediaType}
+              postFormat={formData.format}
             />
           )}
         </div>
@@ -235,7 +458,11 @@ function PostGeneratorContent() {
 
 export default function PostGeneratorPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    }>
       <PostGeneratorContent />
     </Suspense>
   )

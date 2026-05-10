@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
+import { BRAND_NAME } from '@/lib/brand';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `AI Influencer ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
+              name: `${BRAND_NAME} ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
               description: plan === 'standard' ? '2000 Credits/month, 5 Social Accounts' : '10000 Credits/month, Unlimited Social Accounts',
             },
             unit_amount,

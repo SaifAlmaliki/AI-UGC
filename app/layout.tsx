@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { BRAND_TAGLINE, BRAND_TITLE, THEME_STORAGE_KEY } from "@/lib/brand";
+
+const themeInitScript = `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var t=localStorage.getItem(k);document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,8 +17,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "InfluencerAI | AI Influencer Generator & Scheduler",
-  description: "The all-in-one platform to generate AI influencers, create viral content, and schedule posts automatically.",
+  title: BRAND_TITLE,
+  description: BRAND_TAGLINE,
 };
 
 export default function RootLayout({
@@ -31,9 +33,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="antialiased">
-        <Script id="theme-init" strategy="beforeInteractive">
-          {`(function(){try{var k='influencer-ai-theme';var t=localStorage.getItem(k);document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`}
-        </Script>
+        <script
+          // Runs as the HTML stream is parsed (before React hydrates); avoids next/script + RSC client warnings.
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

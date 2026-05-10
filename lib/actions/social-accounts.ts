@@ -5,6 +5,8 @@ import { createAdminClient } from '../supabase/admin';
 import { zernio } from '../zernio';
 import { revalidatePath } from 'next/cache';
 
+import { BRAND_NAME } from '@/lib/brand';
+
 function zernioProfileIdFromItem(p: Record<string, unknown>): string | null {
   if (typeof p._id === 'string') return p._id;
   if (typeof p.id === 'string') return p.id;
@@ -47,9 +49,9 @@ export async function getSocialConnectUrlAction(platform: string, origin: string
     }
 
     let zernioProfileId = profile.zernio_profile_id;
-    const zernioDescription = `InfluencerAI profile for user ${user.id}`;
+    const zernioDescription = `${BRAND_NAME} profile for user ${user.id}`;
     const legacyZernioName = `Profile for ${profile.email}`;
-    const zernioProfileName = `InfluencerAI · ${user.id}`;
+    const zernioProfileName = `${BRAND_NAME} · ${user.id}`;
 
     // 2. Ensure a Zernio profile exists (API keys are per-project; names must be unique)
     if (!zernioProfileId) {

@@ -88,7 +88,11 @@ export const zernio = {
       publishNow?: boolean;
       timezone?: string;
       mediaItems?: Array<{ url: string; type: 'image' | 'video' | 'document' }>;
-      platforms: Array<{ platform: string; accountId: string }>;
+      platforms: Array<{
+        platform: string;
+        accountId: string;
+        platformSpecificData?: Record<string, unknown>;
+      }>;
     }) => {
       return zernioFetch('/posts', {
         method: 'POST',

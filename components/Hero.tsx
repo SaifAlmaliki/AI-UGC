@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "./ui/Button";
 import { ArrowRight, Play, Users } from "lucide-react";
+import { BRAND_TAGLINE } from "@/lib/brand";
 
 export const Hero = () => {
   return (
@@ -48,9 +49,7 @@ export const Hero = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0 mb-8"
             >
-              Generate consistent AI influencers, create viral content, and schedule 
-              posts automatically across all social platforms. The future of content 
-              creation is here.
+              {BRAND_TAGLINE}
             </motion.p>
 
             <motion.div
@@ -100,7 +99,7 @@ export const Hero = () => {
             <div className="relative z-10 rounded-3xl overflow-hidden border border-border shadow-xl shadow-primary/10 dark:border-white/10 dark:shadow-primary/20">
               <Image 
                 src="/hero-ai.png" 
-                alt="AI Influencer" 
+                alt="Kyvello AI creator" 
                 width={600} 
                 height={600}
                 className="w-full h-auto hover:scale-105 transition-transform duration-700"

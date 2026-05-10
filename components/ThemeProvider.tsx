@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-
-const STORAGE_KEY = "influencer-ai-theme";
+import { THEME_STORAGE_KEY } from "@/lib/brand";
 
 export type ThemeMode = "light" | "dark";
 
@@ -28,7 +27,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (!ready) return;
     document.documentElement.setAttribute("data-theme", theme);
     try {
-      window.localStorage.setItem(STORAGE_KEY, theme);
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
     } catch {
       /* private mode / quota */
     }

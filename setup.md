@@ -1,6 +1,6 @@
 # Project Setup Guide
 
-This guide will walk you through setting up the AI Influencer Generator project locally.
+This guide will walk you through setting up **Kyvello** locally.
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ This guide will walk you through setting up the AI Influencer Generator project 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd ai-influencer-generator
+   cd kyvello
    ```
 
 2. **Install dependencies**

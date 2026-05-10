@@ -233,6 +233,7 @@ export function RecentActivity() {
                           caption={selectedPost.caption}
                           initialStatus={selectedPost.status}
                           isPlatformConnected={isPlatformConnected}
+                          postFormat={selectedPost.post_format}
                           onSuccess={() => {
                             fetchPosts()
                             setSelectedPost(null)
@@ -251,6 +252,7 @@ export function RecentActivity() {
                             initialStatus={selectedPost.status}
                             initialScheduledAt={selectedPost.scheduled_at}
                             isPlatformConnected={isPlatformConnected}
+                            postFormat={selectedPost.post_format}
                             onSuccess={() => {
                               fetchPosts()
                               setSelectedPost(null)
