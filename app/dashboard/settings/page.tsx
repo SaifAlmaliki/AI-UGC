@@ -95,7 +95,7 @@ export default function SettingsPage() {
               <li className="flex items-center"><Check className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 shrink-0" /> 300 Credits (initial)</li>
               <li className="flex items-center"><Check className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 shrink-0" /> 50 Credits / AI Influencer Create</li>
               <li className="flex items-center"><Check className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 shrink-0" /> 20 Credits / Create New Post</li>
-              <li className="flex items-center"><Check className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 shrink-0" /> 1 Social Media Connect</li>
+              <li className="flex items-center"><Check className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 shrink-0" /> 2 Social Media Connects</li>
               <li className="flex items-center"><Check className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 shrink-0" /> 5 Max Autopost schedule</li>
             </ul>
             <div className="mt-8">

@@ -38,8 +38,8 @@ export async function getSocialConnectUrlAction(platform: string, origin: string
 
     if (!countError && count !== null) {
       const plan = profile.plan || 'free';
-      if (plan === 'free' && count >= 1) {
-        return { success: false, error: 'Free plan limit reached (1 account max). Please upgrade.' };
+      if (plan === 'free' && count >= 2) {
+        return { success: false, error: 'Free plan limit reached (2 accounts max). Please upgrade.' };
       }
       if (plan === 'standard' && count >= 5) {
         return { success: false, error: 'Standard plan limit reached (5 accounts max). Please upgrade to Pro.' };

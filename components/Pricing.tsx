@@ -14,7 +14,7 @@ const plans = [
       "300 Credits (initial)",
       "50 Credits / AI Influencer Create",
       "20 Credits / Create New Post",
-      "1 Social Media Connect",
+      "2 Social Media Connects",
       "5 Max Autopost schedule",
     ],
     cta: "Start for Free",
