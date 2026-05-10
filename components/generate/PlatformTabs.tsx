@@ -56,8 +56,8 @@ export default function PlatformTabs({ onSelect, connectedAccounts }: PlatformTa
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-slate-300">Select Platforms</label>
-        <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Multi-Select Active</span>
+        <label className="text-sm font-medium text-foreground">Select Platforms</label>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Multi-Select Active</span>
       </div>
 
       <div className="space-y-6">
@@ -76,14 +76,14 @@ export default function PlatformTabs({ onSelect, connectedAccounts }: PlatformTa
                     onClick={() => handleSelect(platform.id)}
                     className={`flex-1 min-w-[140px] flex items-center justify-center gap-3 px-5 py-4 rounded-2xl border transition-all duration-300 group ${
                       isSelected
-                        ? 'bg-primary/10 border-primary text-white shadow-[0_0_20px_rgba(14,165,233,0.15)]'
-                        : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10 hover:border-white/20'
+                        ? 'bg-primary/10 border-primary text-foreground shadow-[0_0_20px_rgba(14,165,233,0.12)] dark:text-white dark:shadow-[0_0_20px_rgba(14,165,233,0.15)]'
+                        : 'bg-muted border-border text-muted-foreground hover:bg-muted/80 hover:border-primary/20 dark:bg-white/5 dark:border-white/5 dark:hover:bg-white/10 dark:hover:border-white/20'
                     }`}
                   >
                     <div className={`p-2 rounded-xl bg-gradient-to-br ${platform.brandColor} ${isSelected ? 'opacity-100' : 'opacity-40 grayscale'} transition-all`}>
-                      <Icon className="w-4 h-4 text-white" />
+                      <Icon className="w-4 h-4 text-primary-foreground" />
                     </div>
-                    <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-400'}`}>
+                    <span className={`text-xs font-bold ${isSelected ? 'text-foreground dark:text-white' : 'text-muted-foreground'}`}>
                       {platform.name}
                     </span>
                     {isSelected && (
@@ -98,7 +98,7 @@ export default function PlatformTabs({ onSelect, connectedAccounts }: PlatformTa
 
         {/* Other Platforms */}
         <div className="space-y-3">
-          <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500 ml-1">
+          <h4 className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground ml-1">
             {connectedPlatforms.length > 0 ? 'Connect More Platforms' : 'Available Platforms'}
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -109,8 +109,8 @@ export default function PlatformTabs({ onSelect, connectedAccounts }: PlatformTa
 
               const rowClass = `flex w-full items-center gap-2 rounded-xl border transition-all duration-300 ${
                 isSelected
-                  ? 'bg-white/10 border-white/20 text-white'
-                  : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/8'
+                  ? 'bg-primary/10 border-primary/40 text-foreground dark:bg-white/10 dark:border-white/20 dark:text-white'
+                  : 'bg-muted border-border text-muted-foreground hover:bg-muted/80 dark:bg-white/5 dark:border-white/5 dark:text-slate-500 dark:hover:bg-white/[0.08]'
               }`
 
               return (
@@ -121,7 +121,7 @@ export default function PlatformTabs({ onSelect, connectedAccounts }: PlatformTa
                       onClick={() => handleSelect(platform.id)}
                       className="flex min-w-0 flex-1 items-center gap-2 px-4 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50"
                     >
-                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-white' : 'text-slate-600'}`} />
+                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-primary dark:text-white' : 'text-muted-foreground dark:text-slate-600'}`} />
                       <span className="text-[11px] font-medium">{platform.name}</span>
                     </button>
                     {isSelected && !isConnecting && (
@@ -142,7 +142,7 @@ export default function PlatformTabs({ onSelect, connectedAccounts }: PlatformTa
               )
             })}
           </div>
-          <p className="text-[10px] text-slate-600 italic ml-1">* Select multiple to post to all networks at once.</p>
+          <p className="text-[10px] text-muted-foreground italic ml-1">* Select multiple to post to all networks at once.</p>
         </div>
       </div>
     </div>

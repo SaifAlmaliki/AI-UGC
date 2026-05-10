@@ -44,9 +44,7 @@ function PostGeneratorContent() {
     fetchConnectedAccounts()
   }, [fetchConnectedAccounts])
 
-  const isPlatformConnected = formData.platform.every(p => 
-    connectedAccounts.some(acc => acc.platform.toLowerCase() === p.toLowerCase())
-  )
+  const isPlatformConnected = connectedAccounts.length > 0
 
   const handleModelSelect = useCallback((id: string) => {
     setFormData(prev => ({ ...prev, modelId: id }))
@@ -108,13 +106,13 @@ function PostGeneratorContent() {
     <div className="min-h-screen">
       <div className="mb-10 flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-white tracking-tight flex items-center gap-3">
+          <h1 className="text-4xl font-bold text-foreground tracking-tight flex items-center gap-3">
             Post Generator
             <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest">
               AI Engine Active
             </div>
           </h1>
-          <p className="text-slate-500 mt-2">Create viral social media content with AI influencers in seconds.</p>
+          <p className="text-muted-foreground mt-2">Create viral social media content with AI influencers in seconds.</p>
         </div>
       </div>
 
@@ -123,9 +121,9 @@ function PostGeneratorContent() {
         <div className="lg:col-span-7 space-y-10">
           <section className="glass rounded-3xl p-8 space-y-8 shadow-xl">
             <ModelPicker onSelect={handleModelSelect} initialModelId={initialModelId || null} />
-            <hr className="border-white/5" />
+            <hr className="border-border/60 dark:border-white/5" />
             <PlatformTabs onSelect={handlePlatformSelect} connectedAccounts={connectedAccounts} />
-            <hr className="border-white/5" />
+            <hr className="border-border/60 dark:border-white/5" />
             <PostFormatSelector onSelect={handleFormatSelect} />
           </section>
 
@@ -147,46 +145,46 @@ function PostGeneratorContent() {
 
           <section className="glass rounded-3xl p-8 space-y-6 shadow-xl">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+              <label className="text-sm font-medium text-foreground flex items-center gap-2">
                 <Upload className="w-4 h-4 text-primary" />
                 Reference Images
               </label>
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Max 3 Images</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Max 3 Images</span>
             </div>
 
             <div className="flex gap-4">
               {formData.referenceImages.map((img, i) => (
-                <div key={i} className="relative w-24 h-24 rounded-2xl overflow-hidden border border-white/10 group">
+                <div key={i} className="relative w-24 h-24 rounded-2xl overflow-hidden border border-border group">
                   <Image src={img} alt="ref" fill sizes="96px" className="object-cover" />
                   <button 
                     onClick={() => setFormData(prev => ({ ...prev, referenceImages: prev.referenceImages.filter((_, idx) => idx !== i) }))}
-                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 dark:bg-black/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <X className="w-3 h-3 text-white" />
+                    <X className="w-3 h-3 text-primary-foreground" />
                   </button>
                 </div>
               ))}
               {formData.referenceImages.length < 3 && (
-                <label className="w-24 h-24 rounded-2xl border-2 border-dashed border-white/10 bg-white/5 flex flex-col items-center justify-center cursor-pointer hover:bg-white/10 hover:border-white/20 transition-all group">
-                  <Upload className="w-5 h-5 text-slate-500 group-hover:text-primary transition-colors" />
-                  <span className="text-[10px] text-slate-600 mt-2">Upload</span>
+                <label className="w-24 h-24 rounded-2xl border-2 border-dashed border-border bg-muted dark:bg-white/5 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/80 dark:hover:bg-white/10 hover:border-primary/30 transition-all group">
+                  <Upload className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <span className="text-[10px] text-muted-foreground mt-2">Upload</span>
                   <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                 </label>
               )}
             </div>
 
             <div className="space-y-2">
-              <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 ml-1">AI Prompt Instruction (Editable)</p>
+              <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">AI Prompt Instruction (Editable)</p>
               <div className="relative">
                 <textarea
                   rows={4}
                   value={formData.prompt}
                   onChange={(e) => setFormData(p => ({ ...p, prompt: e.target.value }))}
                   placeholder="Optional: extra photography notes. The image prompt already includes your content brief and visual direction above."
-                  className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none shadow-inner"
+                  className="w-full bg-muted dark:bg-slate-900/50 border border-border dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none shadow-inner"
                 />
                 <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                   <div className="text-[10px] text-slate-500 font-medium">Brief + art direction + notes</div>
+                   <div className="text-[10px] text-muted-foreground font-medium">Brief + art direction + notes</div>
                 </div>
               </div>
             </div>
@@ -194,7 +192,7 @@ function PostGeneratorContent() {
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="w-full h-16 rounded-2xl bg-gradient-to-r from-primary to-accent text-white font-bold text-lg flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(14,165,233,0.3)] hover:shadow-[0_0_50px_rgba(14,165,233,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+              className="w-full h-16 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold text-lg flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(14,165,233,0.3)] hover:shadow-[0_0_50px_rgba(14,165,233,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               {loading ? (
                 <>

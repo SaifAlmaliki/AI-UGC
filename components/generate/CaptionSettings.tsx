@@ -60,12 +60,12 @@ export default function CaptionSettings({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-slate-300">Caption & Copy</label>
-        <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Copywriting</span>
+        <label className="text-sm font-medium text-foreground">Caption & Copy</label>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Copywriting</span>
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-slate-500 ml-1">
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">
           <Type className="w-3 h-3 text-primary" />
           Brand Tone
         </div>
@@ -76,8 +76,8 @@ export default function CaptionSettings({
               onClick={() => handleChange('tone', tone)}
               className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-300 border ${
                 formData.tone === tone
-                  ? 'bg-primary border-primary text-white'
-                  : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+                  ? 'bg-primary border-primary text-primary-foreground'
+                  : 'bg-muted border-border text-muted-foreground hover:border-primary/25 dark:bg-white/5 dark:border-white/10 dark:hover:border-white/20'
               }`}
             >
               {tone}
@@ -88,36 +88,36 @@ export default function CaptionSettings({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-slate-500 ml-1">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">
             <LinkIcon className="w-3 h-3 text-primary" />
             Primary CTA
           </div>
           <select
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer"
+            className="w-full bg-muted dark:bg-white/5 border border-border dark:border-white/10 rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer"
             value={formData.cta}
             onChange={(e) => handleChange('cta', e.target.value)}
           >
-            {ctas.map(c => <option key={c} value={c} className="bg-slate-900">{c}</option>)}
+            {ctas.map(c => <option key={c} value={c} className="bg-card text-foreground">{c}</option>)}
           </select>
         </div>
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-slate-500 ml-1">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">
             <Languages className="w-3 h-3 text-primary" />
             Language
           </div>
           <select
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer"
+            className="w-full bg-muted dark:bg-white/5 border border-border dark:border-white/10 rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer"
             value={formData.language}
             onChange={(e) => handleChange('language', e.target.value)}
           >
-            {languages.map(l => <option key={l} value={l} className="bg-slate-900">{l}</option>)}
+            {languages.map(l => <option key={l} value={l} className="bg-card text-foreground">{l}</option>)}
           </select>
         </div>
       </div>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between ml-1">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-slate-500">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
             <Hash className="w-3 h-3 text-primary" />
             Hashtag Count
           </div>
@@ -129,12 +129,12 @@ export default function CaptionSettings({
           max="30"
           value={formData.hashtags}
           onChange={(e) => handleChange('hashtags', parseInt(e.target.value))}
-          className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-primary"
+          className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary dark:bg-white/5"
         />
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-slate-500 ml-1">
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">
           <Smile className="w-3 h-3 text-primary" />
           Emoji Density
         </div>
@@ -145,8 +145,8 @@ export default function CaptionSettings({
               onClick={() => handleChange('emojiDensity', d)}
               className={`flex-1 px-4 py-2 rounded-xl text-xs font-medium transition-all duration-300 border ${
                 formData.emojiDensity === d
-                  ? 'bg-primary/10 border-primary text-white'
-                  : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+                  ? 'bg-primary/10 border-primary text-primary dark:text-white'
+                  : 'bg-muted border-border text-muted-foreground hover:border-primary/25 dark:bg-white/5 dark:border-white/10 dark:hover:border-white/20'
               }`}
             >
               {d}
@@ -157,7 +157,7 @@ export default function CaptionSettings({
 
       <div className="space-y-2">
         <div className="flex items-center justify-between ml-1">
-          <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Auto-Generated Caption</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Auto-Generated Caption</p>
           <button 
             onClick={handleRegenerate}
             disabled={isGenerating}
@@ -171,7 +171,7 @@ export default function CaptionSettings({
             {isGenerating ? 'Generating...' : 'Regenerate'}
           </button>
         </div>
-        <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-slate-300 italic">
+        <div className="w-full bg-muted dark:bg-white/5 border border-border dark:border-white/10 rounded-xl p-4 text-sm text-muted-foreground italic">
           {formData.caption}
         </div>
       </div>

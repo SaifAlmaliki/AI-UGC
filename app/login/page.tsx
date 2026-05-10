@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/Button";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 
 export default function LoginPage() {
@@ -77,6 +78,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeToggle />
+      </div>
       {/* Background Blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full -z-10" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/10 blur-[120px] rounded-full -z-10" />
@@ -91,17 +95,17 @@ export default function LoginPage() {
           <div className="bg-primary p-2 rounded-xl group-hover:scale-110 transition-transform">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
-          <span className="text-2xl font-bold font-display tracking-tight text-white">
+          <span className="text-2xl font-bold font-display tracking-tight text-foreground">
             Influencer<span className="text-primary">AI</span>
           </span>
         </Link>
 
-        <div className="glass p-8 rounded-3xl border border-white/10 shadow-2xl">
+        <div className="glass p-8 rounded-3xl border border-border shadow-2xl">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-white mb-2">
+            <h1 className="text-2xl font-bold text-foreground mb-2">
               {isSignUp ? "Create an Account" : "Welcome Back"}
             </h1>
-            <p className="text-slate-400 text-sm">
+            <p className="text-muted-foreground text-sm">
               {isSignUp
                 ? "Join 1,200+ creators scaling their presence"
                 : "Sign in to continue your AI journey"}
@@ -110,30 +114,30 @@ export default function LoginPage() {
 
           <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300 ml-1">Email</label>
+              <label className="text-sm font-medium text-foreground ml-1">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="email"
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  className="w-full bg-muted/60 dark:bg-white/5 border border-border dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300 ml-1">Password</label>
+              <label className="text-sm font-medium text-foreground ml-1">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  className="w-full bg-muted/60 dark:bg-white/5 border border-border dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   required
                 />
               </div>
@@ -177,10 +181,10 @@ export default function LoginPage() {
 
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#0f172a] px-2 text-slate-500">Or continue with</span>
+              <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
             </div>
           </div>
 
@@ -188,7 +192,7 @@ export default function LoginPage() {
             <Button
               variant="outline"
               onClick={() => handleOAuthLogin('google')}
-              className="rounded-xl h-12 border-white/10 hover:bg-white/5 w-full flex items-center justify-center"
+              className="rounded-xl h-12 border-border hover:bg-muted w-full flex items-center justify-center"
             >
               <svg className="mr-2 w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -215,7 +219,7 @@ export default function LoginPage() {
           <div className="mt-8 text-center">
             <button
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-slate-400 hover:text-white transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {isSignUp
                 ? "Already have an account? Sign In"

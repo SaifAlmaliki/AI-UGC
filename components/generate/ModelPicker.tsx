@@ -45,7 +45,7 @@ export default function ModelPicker({
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-48 rounded-2xl bg-white/5 animate-pulse border border-white/10" />
+          <div key={i} className="h-48 rounded-2xl bg-muted animate-pulse border border-border dark:bg-white/5 dark:border-white/10" />
         ))}
       </div>
     )
@@ -54,11 +54,11 @@ export default function ModelPicker({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+        <label className="text-sm font-medium text-foreground flex items-center gap-2">
           <UsersIcon className="w-4 h-4 text-primary" />
           Model Picker
         </label>
-        <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Select Influencer</span>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Select Influencer</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -71,7 +71,7 @@ export default function ModelPicker({
             }}
             className={`relative group rounded-2xl overflow-hidden border-2 transition-all duration-300 text-left ${selectedId === model.id
                 ? 'border-primary ring-4 ring-primary/20 shadow-[0_0_20px_rgba(14,165,233,0.3)]'
-                : 'border-white/5 hover:border-white/20'
+                : 'border-border hover:border-primary/30 dark:border-white/5 dark:hover:border-white/20'
               }`}
           >
             <div className="aspect-[3/4] relative">
@@ -88,7 +88,7 @@ export default function ModelPicker({
 
               {selectedId === model.id && (
                 <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg animate-in zoom-in">
-                  <Check className="w-4 h-4 text-white" />
+                  <Check className="w-4 h-4 text-primary-foreground" />
                 </div>
               )}
 
@@ -108,8 +108,8 @@ export default function ModelPicker({
         ))}
 
         {models.length === 0 && (
-          <div className="col-span-full py-12 text-center rounded-2xl border-2 border-dashed border-white/10 bg-white/5">
-            <p className="text-slate-500 text-sm">No models found. Create one in Studio!</p>
+          <div className="col-span-full py-12 text-center rounded-2xl border-2 border-dashed border-border bg-muted dark:border-white/10 dark:bg-white/5">
+            <p className="text-muted-foreground text-sm">No models found. Create one in Studio!</p>
           </div>
         )}
       </div>

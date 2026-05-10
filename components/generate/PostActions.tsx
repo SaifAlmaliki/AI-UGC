@@ -93,16 +93,16 @@ export default function PostActions({ postId, modelId, imageUrl, platform, capti
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="glass rounded-3xl p-6 border border-white/10 shadow-2xl space-y-6">
+      <div className="glass rounded-3xl p-6 border border-border shadow-xl space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Send className="w-5 h-5 text-primary" />
             Post Actions
           </h3>
           <button
             onClick={handleSaveDraft}
             disabled={!!loading}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted border border-border text-sm font-medium text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-all disabled:opacity-50 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10 dark:hover:text-white"
           >
             {loading === 'draft' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save Draft
@@ -125,9 +125,10 @@ export default function PostActions({ postId, modelId, imageUrl, platform, capti
                 <AlertCircle className="w-4 h-4" />
                 <p className="text-xs font-bold uppercase tracking-wider">Connections Required</p>
               </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                One or more of your selected platforms (<span className="text-white font-medium capitalize">{platformsArray.join(', ')}</span>) are not connected. 
-                Please connect all selected accounts to schedule this post.
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Connect at least one social account to schedule or publish posts. Posts can target{' '}
+                <span className="text-foreground font-medium capitalize">{platformsArray.join(', ')}</span>
+                {' '}once those platforms are linked from Accounts.
               </p>
               <button 
                 onClick={() => window.location.href = '/dashboard/accounts'}
@@ -142,8 +143,8 @@ export default function PostActions({ postId, modelId, imageUrl, platform, capti
                 onClick={() => setIsScheduled(!isScheduled)}
                 className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-3 border ${
                   isScheduled 
-                    ? 'bg-primary border-primary text-white shadow-lg' 
-                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:border-primary/30'
+                    ? 'bg-primary border-primary text-primary-foreground shadow-lg' 
+                    : 'bg-muted border-border text-muted-foreground hover:bg-muted/80 hover:border-primary/30 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10'
                 }`}
               >
                 <Calendar className="w-5 h-5" />
@@ -152,16 +153,16 @@ export default function PostActions({ postId, modelId, imageUrl, platform, capti
 
               {isScheduled && (
                 <div className="space-y-4 pt-2 animate-in slide-in-from-top-2 duration-300">
-                  <div className="flex items-center justify-between p-1 bg-white/5 rounded-xl border border-white/10">
+                  <div className="flex items-center justify-between p-1 bg-muted rounded-xl border border-border dark:bg-white/5 dark:border-white/10">
                     <button
                       onClick={() => setPublishNow(true)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${publishNow ? 'bg-primary text-white shadow-md' : 'text-slate-500'}`}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${publishNow ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground'}`}
                     >
                       Publish Now
                     </button>
                     <button
                       onClick={() => setPublishNow(false)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${!publishNow ? 'bg-primary text-white shadow-md' : 'text-slate-500'}`}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${!publishNow ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground'}`}
                     >
                       Schedule Later
                     </button>
@@ -170,26 +171,26 @@ export default function PostActions({ postId, modelId, imageUrl, platform, capti
                   {!publishNow && (
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Date</label>
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Date</label>
                         <div className="relative">
-                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                           <input
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-all [color-scheme:dark]"
+                            className="w-full bg-muted border border-border rounded-xl pl-10 pr-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-all dark:bg-black/40 dark:border-white/10 dark:text-white [color-scheme:light] dark:[color-scheme:dark]"
                           />
                         </div>
                       </div>
                       <div className="grid grid-cols-1 gap-2">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Time</label>
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Time</label>
                         <div className="relative">
-                          <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                          <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                           <input
                             type="time"
                             value={time}
                             onChange={(e) => setTime(e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-all [color-scheme:dark]"
+                            className="w-full bg-muted border border-border rounded-xl pl-10 pr-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-all dark:bg-black/40 dark:border-white/10 dark:text-white [color-scheme:light] dark:[color-scheme:dark]"
                           />
                         </div>
                       </div>
@@ -199,7 +200,7 @@ export default function PostActions({ postId, modelId, imageUrl, platform, capti
                   <button
                     onClick={handleSchedule}
                     disabled={loading === 'schedule' || (!publishNow && (!date || !time))}
-                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-accent text-white font-bold shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                   >
                     {loading === 'schedule' ? (
                       <Loader2 className="w-5 h-5 animate-spin" />

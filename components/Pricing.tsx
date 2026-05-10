@@ -59,11 +59,11 @@ export const Pricing = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl font-bold font-display mb-4"
+            className="text-4xl font-bold font-display mb-4 text-foreground"
           >
             Simple, <span className="text-primary">Transparent</span> Pricing
           </motion.h2>
-          <p className="text-slate-400 text-lg">
+          <p className="text-muted-foreground text-lg">
             Choose the plan that fits your growth ambitions.
           </p>
         </div>
@@ -87,12 +87,12 @@ export const Pricing = () => {
               )}
 
               <div className="mb-8">
-                <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
+                <h3 className="text-xl font-bold text-foreground mb-2">{plan.name}</h3>
                 <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-4xl font-bold text-white">{plan.price}</span>
-                  <span className="text-slate-500">/mo</span>
+                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                  <span className="text-muted-foreground">/mo</span>
                 </div>
-                <p className="text-sm text-slate-400">{plan.description}</p>
+                <p className="text-sm text-muted-foreground">{plan.description}</p>
               </div>
 
               <div className="space-y-4 mb-8 flex-1">
@@ -101,7 +101,7 @@ export const Pricing = () => {
                     <div className="mt-1 bg-primary/20 rounded-full p-0.5">
                       <Check className="w-3.5 h-3.5 text-primary" />
                     </div>
-                    <span className="text-sm text-slate-300">{feature}</span>
+                    <span className="text-sm text-muted-foreground">{feature}</span>
                   </div>
                 ))}
               </div>

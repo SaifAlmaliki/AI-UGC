@@ -16,8 +16,8 @@ export default function PostFormatSelector({ onSelect }: { onSelect: (id: string
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-slate-300">Post Format</label>
-        <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Aspect Ratio</span>
+        <label className="text-sm font-medium text-foreground">Post Format</label>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Aspect Ratio</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -35,19 +35,19 @@ export default function PostFormatSelector({ onSelect }: { onSelect: (id: string
               className={`p-4 rounded-2xl border transition-all duration-300 flex flex-col items-center gap-3 group ${
                 isSelected
                   ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(14,165,233,0.15)]'
-                  : 'bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10'
+                  : 'bg-muted border-border hover:border-primary/30 hover:bg-muted/80 dark:bg-white/5 dark:border-white/5 dark:hover:border-white/10 dark:hover:bg-white/10'
               }`}
             >
               <div className={`p-3 rounded-xl transition-colors ${
-                isSelected ? 'bg-primary text-white' : 'bg-white/5 text-slate-500 group-hover:text-slate-300'
+                isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground group-hover:text-foreground dark:bg-white/5 dark:text-slate-500 dark:group-hover:text-slate-300'
               }`}>
                 <Icon className="w-5 h-5" />
               </div>
               <div className="text-center">
-                <p className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-400'}`}>
+                <p className={`text-xs font-bold ${isSelected ? 'text-foreground dark:text-white' : 'text-muted-foreground'}`}>
                   {format.name}
                 </p>
-                <p className="text-[10px] text-slate-500 mt-0.5">{format.desc}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{format.desc}</p>
               </div>
             </button>
           )

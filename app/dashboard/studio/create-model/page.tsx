@@ -175,14 +175,14 @@ export default function CreateModelPage() {
   return (
     <div className="max-w-[1200px] mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex items-center justify-between mb-6">
-        <Link href="/dashboard/studio" className="flex items-center gap-2 text-xs text-slate-500 hover:text-white transition-colors group">
+        <Link href="/dashboard/studio" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors group">
           <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
           Studio
         </Link>
         
-        <div className="flex items-center gap-2.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg glass">
+        <div className="flex items-center gap-2.5 bg-muted dark:bg-white/5 border border-border dark:border-white/10 px-3 py-1.5 rounded-lg glass">
           <Zap className="text-primary w-3.5 h-3.5 fill-primary/20" />
-          <span className="text-xs font-bold text-white">{credits ?? '...'} Credits</span>
+          <span className="text-xs font-bold text-foreground">{credits ?? '...'} Credits</span>
         </div>
       </div>
 
@@ -190,18 +190,18 @@ export default function CreateModelPage() {
         {/* Form Side */}
         <div className="lg:col-span-7 space-y-6 pb-12">
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Create AI Model</h1>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Create AI Model</h1>
             <p className="text-xs text-slate-500 mt-1">Design your unique digital influencer personality.</p>
           </div>
 
-          <div className="space-y-5 bg-white/5 border border-white/10 p-6 rounded-2xl glass-dark">
+          <div className="space-y-5 bg-muted dark:bg-white/5 border border-border dark:border-white/10 p-6 rounded-2xl glass-dark">
             {/* Name Input */}
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Influencer Name</label>
               <input 
                 type="text"
                 placeholder="e.g. Maya Rivers"
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors"
+                className="w-full bg-muted dark:bg-white/5 border border-border dark:border-white/10 rounded-xl p-3 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
               />
@@ -240,7 +240,7 @@ export default function CreateModelPage() {
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Hair Style</label>
                 <select 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-primary/50 transition-colors appearance-none"
+                  className="w-full bg-muted dark:bg-white/5 border border-border dark:border-white/10 rounded-xl p-3 text-xs text-foreground focus:outline-none focus:border-primary/50 transition-colors appearance-none"
                   value={formData.hairStyle}
                   onChange={(e) => setFormData({...formData, hairStyle: e.target.value})}
                 >
@@ -275,7 +275,7 @@ export default function CreateModelPage() {
               </div>
               <div className="relative group">
                 <textarea 
-                  className="w-full h-24 bg-slate-900/50 border border-white/10 rounded-xl p-4 text-xs text-slate-300 leading-relaxed resize-none focus:outline-none focus:border-primary/30 transition-all"
+                  className="w-full h-24 bg-muted dark:bg-slate-900/50 border border-border dark:border-white/10 rounded-xl p-4 text-xs text-muted-foreground leading-relaxed resize-none focus:outline-none focus:border-primary/30 transition-all dark:text-slate-300"
                   value={prompt}
                   onChange={(e) => {
                     setPrompt(e.target.value)
@@ -312,7 +312,7 @@ export default function CreateModelPage() {
         <div className="lg:col-span-5">
           <div className="sticky top-10 space-y-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <ImageIcon className="text-primary w-4 h-4" />
                 Preview
               </h3>
@@ -321,7 +321,7 @@ export default function CreateModelPage() {
                   <button 
                     onClick={handleGenerate}
                     disabled={generating || isSaving}
-                    className="text-[10px] text-slate-500 hover:text-white transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                    className="text-[10px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-50"
                   >
                     <RefreshCw className="w-3 h-3" /> Regenerate
                   </button>
@@ -367,12 +367,12 @@ export default function CreateModelPage() {
             )}
 
             {!previewImages && !generating ? (
-              <div className="aspect-[4/5] bg-white/5 border border-white/10 border-dashed rounded-3xl flex flex-col items-center justify-center text-center p-8 space-y-3">
-                <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center border border-white/5">
+              <div className="aspect-[4/5] bg-muted dark:bg-white/5 border border-border dark:border-white/10 border-dashed rounded-3xl flex flex-col items-center justify-center text-center p-8 space-y-3">
+                <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center border border-border dark:bg-slate-800/50 dark:border-white/5">
                   <ImageIcon className="text-slate-600 w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-white text-sm font-medium">Ready to Visualize</p>
+                  <p className="text-foreground text-sm font-medium dark:text-white">Ready to Visualize</p>
                   <p className="text-[10px] text-slate-500 mt-1 max-w-[200px]">Configure your options and click generate to see the results.</p>
                 </div>
               </div>
@@ -381,7 +381,7 @@ export default function CreateModelPage() {
                 {/* Portrait Preview */}
                 <div className="relative group">
                   <div className={cn(
-                    "aspect-square rounded-3xl overflow-hidden border border-white/10 bg-slate-900 shadow-xl",
+                    "aspect-square rounded-3xl overflow-hidden border border-border bg-muted shadow-xl dark:border-white/10 dark:bg-slate-900",
                     generating && "animate-pulse"
                   )}>
                     {generating ? (
@@ -405,7 +405,7 @@ export default function CreateModelPage() {
                 {/* Full Body Preview */}
                 <div className="relative group">
                   <div className={cn(
-                    "aspect-[3/4] rounded-3xl overflow-hidden border border-white/10 bg-slate-900 shadow-xl",
+                    "aspect-[3/4] rounded-3xl overflow-hidden border border-border bg-muted shadow-xl dark:border-white/10 dark:bg-slate-900",
                     generating && "animate-pulse"
                   )}>
                     {generating ? (

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { History, Calendar, Clock, ChevronRight, ChevronLeft, MoreHorizontal, ExternalLink, Edit3, Trash2, CheckCircle2, AlertCircle, Loader2, Sparkles, Send } from 'lucide-react'
 import { format } from 'date-fns'
 import { getRecentPostsAction, updatePostAction } from '@/lib/actions/posts'
+import { getConnectedAccountsAction } from '@/lib/actions/social-accounts'
 import { Button } from '../ui/Button'
 import PostActions from '../generate/PostActions'
 
@@ -15,6 +16,11 @@ export function RecentActivity() {
   const [totalCount, setTotalCount] = useState(0)
   const [selectedPost, setSelectedPost] = useState<any | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [connectedAccountsCount, setConnectedAccountsCount] = useState<number | null>(null)
+
+  // While count is unknown (null), assume connected to avoid a false "Connections Required" flash
+  const isPlatformConnected =
+    connectedAccountsCount === null || connectedAccountsCount > 0
 
   const fetchPosts = async () => {
     setLoading(true)
@@ -30,6 +36,13 @@ export function RecentActivity() {
     fetchPosts()
   }, [page])
 
+  useEffect(() => {
+    ;(async () => {
+      const accounts = await getConnectedAccountsAction()
+      setConnectedAccountsCount(accounts.length)
+    })()
+  }, [])
+
   const handleUpdateStatus = async (postId: string, status: 'draft' | 'scheduled') => {
     setIsUpdating(true)
     const result = await updatePostAction(postId, { status, scheduledAt: status === 'draft' ? null : undefined })
@@ -42,9 +55,9 @@ export function RecentActivity() {
 
   if (loading && posts.length === 0) {
     return (
-      <div className="bg-white/5 border border-white/10 rounded-3xl p-12 flex flex-col items-center justify-center space-y-4 glass-dark">
+      <div className="bg-muted dark:bg-white/5 border border-border dark:border-white/10 rounded-3xl p-12 flex flex-col items-center justify-center space-y-4 glass-dark">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        <p className="text-slate-500 text-sm">Loading recent activity...</p>
+        <p className="text-muted-foreground text-sm">Loading recent activity...</p>
       </div>
     )
   }
@@ -53,23 +66,23 @@ export function RecentActivity() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <History className="text-slate-400 w-4 h-4" />
-          <h3 className="text-lg font-bold text-white">Recent Activity</h3>
+          <History className="text-muted-foreground w-4 h-4" />
+          <h3 className="text-lg font-bold text-foreground">Recent Activity</h3>
         </div>
         {totalCount > 8 && (
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="p-1 rounded-lg hover:bg-white/5 disabled:opacity-30 text-slate-400"
+              className="p-1 rounded-lg hover:bg-muted disabled:opacity-30 text-muted-foreground dark:hover:bg-white/5"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Page {page}</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Page {page}</span>
             <button
               onClick={() => setPage(p => p + 1)}
               disabled={page * 8 >= totalCount}
-              className="p-1 rounded-lg hover:bg-white/5 disabled:opacity-30 text-slate-400"
+              className="p-1 rounded-lg hover:bg-muted disabled:opacity-30 text-muted-foreground dark:hover:bg-white/5"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -77,16 +90,16 @@ export function RecentActivity() {
         )}
       </div>
 
-      <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden glass-dark">
+      <div className="bg-muted dark:bg-white/5 border border-border dark:border-white/10 rounded-3xl overflow-hidden glass-dark">
         {posts.length > 0 ? (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-border/60 dark:divide-white/5">
             {posts.map((post) => (
               <div
                 key={post.id}
                 onClick={() => setSelectedPost(post)}
-                className="p-4 flex items-center gap-4 hover:bg-white/[0.02] transition-colors cursor-pointer group"
+                className="p-4 flex items-center gap-4 hover:bg-muted/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer group"
               >
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border border-white/10">
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border border-border dark:border-white/10">
                   <Image
                     src={post.image_url}
                     alt={post.caption || 'Post'}
@@ -100,31 +113,31 @@ export function RecentActivity() {
                       ? 'bg-amber-500/10 border-amber-500/20 text-amber-500'
                       : post.status === 'published'
                         ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
-                        : 'bg-slate-500/10 border-slate-500/20 text-slate-500'
+                        : 'bg-slate-500/10 border-slate-500/20 text-muted-foreground'
                       }`}>
                       {post.status}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-medium capitalize">
+                    <span className="text-[10px] text-muted-foreground font-medium capitalize">
                       {post.platform} • {post.models?.name || 'Custom'}
                     </span>
                   </div>
-                  <p className="text-sm text-white font-medium truncate">
+                  <p className="text-sm text-foreground font-medium truncate">
                     {post.caption || 'No caption'}
                   </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
                     {post.status === 'scheduled' && post.scheduled_at
                       ? `Scheduled for ${format(new Date(post.scheduled_at), 'MMM d, h:mm a')}`
                       : `Created ${format(new Date(post.created_at), 'MMM d, h:mm a')}`
                     }
                   </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-white transition-colors" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
             ))}
           </div>
         ) : (
           <div className="p-12 text-center">
-            <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold">No recent activity</p>
+            <p className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold">No recent activity</p>
           </div>
         )}
       </div>
@@ -133,7 +146,7 @@ export function RecentActivity() {
       {selectedPost && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
           <div
-            className="w-full max-w-4xl bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-500"
+            className="w-full max-w-4xl bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-500 dark:bg-[#0a0a0a] dark:border-white/10"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col md:flex-row h-full max-h-[90vh]">
@@ -160,10 +173,10 @@ export function RecentActivity() {
               {/* Details & Actions */}
               <div className="flex-1 p-8 flex flex-col min-w-0 overflow-y-auto scrollbar-hide">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-white">Post Details</h3>
+                  <h3 className="text-xl font-bold text-foreground dark:text-white">Post Details</h3>
                   <button
                     onClick={() => setSelectedPost(null)}
-                    className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                    className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10 dark:hover:text-white"
                   >
                     ×
                   </button>
@@ -171,9 +184,9 @@ export function RecentActivity() {
 
                 <div className="space-y-6 flex-1">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Platform & Model</label>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 block">Platform & Model</label>
                     <div className="flex items-center gap-2">
-                      <div className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white font-medium capitalize">
+                      <div className="px-3 py-1.5 rounded-xl bg-muted border border-border text-xs text-foreground font-medium capitalize dark:bg-white/5 dark:border-white/10 dark:text-white">
                         {selectedPost.platform}
                       </div>
                       <div className="px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary font-bold">
@@ -183,8 +196,8 @@ export function RecentActivity() {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Caption</label>
-                    <p className="text-sm text-slate-300 leading-relaxed bg-white/5 border border-white/10 rounded-2xl p-4">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 block">Caption</label>
+                    <p className="text-sm text-muted-foreground leading-relaxed bg-muted border border-border rounded-2xl p-4 dark:bg-white/5 dark:border-white/10 dark:text-slate-300">
                       {selectedPost.caption || 'No caption provided.'}
                     </p>
                   </div>
@@ -195,21 +208,21 @@ export function RecentActivity() {
                         <Calendar className="w-4 h-4" />
                         <span className="text-xs font-bold uppercase tracking-wider">Scheduled For</span>
                       </div>
-                      <p className="text-lg font-bold text-white ml-7">
+                      <p className="text-lg font-bold text-foreground ml-7 dark:text-white">
                         {format(new Date(selectedPost.scheduled_at), 'EEEE, MMM do')}
                       </p>
-                      <p className="text-sm text-slate-400 ml-7">
+                      <p className="text-sm text-muted-foreground ml-7">
                         at {format(new Date(selectedPost.scheduled_at), 'h:mm a')}
                       </p>
                     </div>
                   )}
 
-                  <div className="pt-4 border-t border-white/5">
+                  <div className="pt-4 border-t border-border/60 dark:border-white/5">
                     {selectedPost.status === 'draft' ? (
                       <div className="space-y-4">
                         <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 mb-4">
                           <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">Draft Post</p>
-                          <p className="text-xs text-slate-400">This post is currently in drafts. You can schedule it to go live on your selected platforms.</p>
+                          <p className="text-xs text-muted-foreground">This post is currently in drafts. You can schedule it to go live on your selected platforms.</p>
                         </div>
 
                         <PostActions
@@ -219,6 +232,7 @@ export function RecentActivity() {
                           platform={selectedPost.platform}
                           caption={selectedPost.caption}
                           initialStatus={selectedPost.status}
+                          isPlatformConnected={isPlatformConnected}
                           onSuccess={() => {
                             fetchPosts()
                             setSelectedPost(null)
@@ -236,6 +250,7 @@ export function RecentActivity() {
                             caption={selectedPost.caption}
                             initialStatus={selectedPost.status}
                             initialScheduledAt={selectedPost.scheduled_at}
+                            isPlatformConnected={isPlatformConnected}
                             onSuccess={() => {
                               fetchPosts()
                               setSelectedPost(null)
@@ -244,16 +259,16 @@ export function RecentActivity() {
 
                           <div className="relative">
                             <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                              <div className="w-full border-t border-white/5"></div>
+                              <div className="w-full border-t border-border/60 dark:border-white/5"></div>
                             </div>
                             <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-bold">
-                              <span className="bg-[#0a0a0a] px-2 text-slate-600">or</span>
+                              <span className="bg-card px-2 text-muted-foreground dark:bg-[#0a0a0a]">or</span>
                             </div>
                           </div>
 
                           <Button
                             variant="outline"
-                            className="w-full justify-center gap-2 border-white/10 hover:bg-white/5 h-12 rounded-2xl"
+                            className="w-full justify-center gap-2 border-border hover:bg-muted h-12 rounded-2xl dark:border-white/10 dark:hover:bg-white/5"
                             onClick={() => handleUpdateStatus(selectedPost.id, 'draft')}
                             disabled={isUpdating}
                           >
@@ -261,14 +276,14 @@ export function RecentActivity() {
                             Move to Drafts
                           </Button>
                         </div>
-                        <p className="text-[10px] text-slate-500 text-center px-4">
+                        <p className="text-[10px] text-muted-foreground text-center px-4">
                           Moving to drafts will cancel the scheduled publication.
                         </p>
                       </div>
                     ) : (
                       <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-center">
                         <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mb-1">Published</p>
-                        <p className="text-xs text-slate-400">This post has already been published to {selectedPost.platform}.</p>
+                        <p className="text-xs text-muted-foreground">This post has already been published to {selectedPost.platform}.</p>
                       </div>
                     )}
                   </div>

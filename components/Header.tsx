@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "./ui/Button";
 import { motion } from "framer-motion";
 import { Sparkles, LogOut, User } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -43,27 +44,28 @@ export const Header = () => {
         <div className="bg-primary p-1.5 rounded-lg">
           <Sparkles className="w-5 h-5 text-white" />
         </div>
-        <span className="text-xl font-bold font-display tracking-tight text-white">
+        <span className="text-xl font-bold font-display tracking-tight text-foreground">
           Influencer<span className="text-primary">AI</span>
         </span>
       </Link>
 
       <nav className="hidden md:flex items-center gap-8">
-        <Link href="#features" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+        <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
           Features
         </Link>
-        <Link href="#how-it-works" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+        <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
           How it Works
         </Link>
-        <Link href="#pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+        <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
           Pricing
         </Link>
       </nav>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
+        <ThemeToggle />
         {user ? (
           <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="hidden sm:flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors">
+            <Link href="/dashboard" className="hidden sm:flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               <User className="w-4 h-4" />
               Dashboard
             </Link>
@@ -74,7 +76,7 @@ export const Header = () => {
           </div>
         ) : (
           <>
-            <Link href="/login" className="hidden sm:block text-sm font-medium text-slate-300 hover:text-white transition-colors">
+            <Link href="/login" className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Log in
             </Link>
             <Link href="/login">

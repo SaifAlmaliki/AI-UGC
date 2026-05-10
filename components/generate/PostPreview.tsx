@@ -27,7 +27,7 @@ export default function PostPreview({ platform, format, imageUrls, caption }: Po
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-white tracking-tight">Live Preview</h3>
+        <h3 className="text-lg font-bold text-foreground tracking-tight">Live Preview</h3>
         <div className="flex gap-2">
           {[0, 1, 2].map((i) => {
             const isAvailable = i === 0 || imageUrls.length > i;
@@ -41,10 +41,10 @@ export default function PostPreview({ platform, format, imageUrls, caption }: Po
                 onClick={() => isAvailable && setActiveVariant(i)}
                 className={`w-8 h-8 rounded-lg text-[10px] font-bold border transition-all ${
                   isActive
-                    ? 'bg-primary border-primary text-white shadow-lg'
+                    ? 'bg-primary border-primary text-primary-foreground shadow-lg'
                     : isAvailable
-                    ? 'bg-white/5 border-white/10 text-slate-500 hover:border-white/20'
-                    : 'bg-white/5 border-white/5 text-slate-700 cursor-not-allowed opacity-50'
+                    ? 'bg-muted border-border text-muted-foreground hover:border-primary/30 dark:bg-white/5 dark:border-white/10 dark:text-slate-500 dark:hover:border-white/20'
+                    : 'bg-muted/50 border-border/60 text-muted-foreground cursor-not-allowed opacity-50 dark:bg-white/5 dark:border-white/5 dark:text-slate-700'
                 }`}
               >
                 V{i + 1}

@@ -13,7 +13,7 @@ interface Model {
 
 export function ModelCard({ model }: { model: Model }) {
   return (
-    <div className="group relative bg-white/5 border border-white/10 rounded-3xl overflow-hidden glass-dark hover:border-primary/50 transition-all duration-500">
+    <div className="group relative bg-muted dark:bg-white/5 border border-border rounded-3xl overflow-hidden glass-dark hover:border-primary/50 transition-all duration-500 dark:border-white/10">
       {/* Image Section */}
       <div className="relative aspect-[4/5] overflow-hidden">
         <Image
@@ -35,22 +35,22 @@ export function ModelCard({ model }: { model: Model }) {
 
       {/* Content Section */}
       <div className="p-4">
-        <h3 className="text-white font-bold text-lg leading-tight group-hover:text-primary transition-colors">
+        <h3 className="text-foreground font-bold text-lg leading-tight group-hover:text-primary transition-colors dark:text-white">
           {model.name}
         </h3>
         
         <div className="flex items-center gap-2 mt-2">
-          <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">{model.gender}</span>
-          <span className="w-1 h-1 rounded-full bg-slate-700" />
-          <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">{model.age_range}</span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">{model.gender}</span>
+          <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">{model.age_range}</span>
         </div>
 
         <Link
           href={`/dashboard/create-post?modelId=${encodeURIComponent(model.id)}`}
-          className="w-full mt-4 py-2 rounded-xl bg-white/5 hover:bg-primary border border-white/5 hover:border-primary transition-all duration-300 flex items-center justify-center gap-2 group/btn"
+          className="w-full mt-4 py-2 rounded-xl bg-muted hover:bg-primary border border-border hover:border-primary transition-all duration-300 flex items-center justify-center gap-2 group/btn dark:bg-white/5 dark:border-white/5"
         >
-          <span className="text-xs font-bold text-white">Generate Post</span>
-          <ArrowRight className="w-3.5 h-3.5 text-white group-hover/btn:translate-x-1 transition-transform" />
+          <span className="text-xs font-bold text-foreground dark:text-white group-hover/btn:text-primary-foreground">Generate Post</span>
+          <ArrowRight className="w-3.5 h-3.5 text-foreground dark:text-white group-hover/btn:text-primary-foreground group-hover/btn:translate-x-1 transition-transform" />
         </Link>
       </div>
     </div>

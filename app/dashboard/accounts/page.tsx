@@ -116,13 +116,13 @@ function AccountsContent() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Social Accounts</h1>
-          <p className="text-slate-400 mt-2">Connect and manage your social media presence for AI-automated posting.</p>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Social Accounts</h1>
+          <p className="text-muted-foreground mt-2">Connect and manage your social media presence for AI-automated posting.</p>
         </div>
         <button
           onClick={handleSync}
           disabled={syncing || loading}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all disabled:opacity-50 group"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-muted border border-border text-foreground hover:bg-muted/80 transition-all disabled:opacity-50 group dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10"
         >
           <RefreshCw className={`w-4 h-4 group-hover:rotate-180 transition-transform duration-500 ${syncing ? 'animate-spin' : ''}`} />
           {syncing ? 'Syncing...' : 'Sync Accounts'}
@@ -137,7 +137,7 @@ function AccountsContent() {
         >
           <CircleAlert className="w-5 h-5 flex-shrink-0" />
           <p className="text-sm">{error}</p>
-          <button onClick={() => setError(null)} className="ml-auto hover:text-white">
+          <button onClick={() => setError(null)} className="ml-auto hover:text-red-600 dark:hover:text-white">
             <X className="w-4 h-4" />
           </button>
         </motion.div>
@@ -155,7 +155,7 @@ function AccountsContent() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="glass rounded-3xl p-6 border border-white/10 hover:border-white/20 transition-all group relative overflow-hidden"
+              className="glass rounded-3xl p-6 border border-border hover:border-primary/25 transition-all group relative overflow-hidden dark:border-white/10 dark:hover:border-white/20"
             >
               {/* Background Glow */}
               <div className={`absolute -right-10 -top-10 w-32 h-32 bg-gradient-to-br ${platform.color} opacity-[0.03] blur-3xl group-hover:opacity-[0.08] transition-opacity`} />
@@ -175,22 +175,22 @@ function AccountsContent() {
               </div>
 
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-white">{platform.name}</h3>
+                <h3 className="text-lg font-bold text-foreground dark:text-white">{platform.name}</h3>
                 
                 <div className="mt-4 space-y-3">
                   {accounts.map((account: any) => (
-                    <div key={account.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group/acc">
-                      <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-800 border border-white/10 flex-shrink-0">
+                    <div key={account.id} className="flex items-center gap-3 p-3 rounded-2xl bg-muted border border-border hover:bg-muted/80 transition-colors group/acc dark:bg-white/5 dark:border-white/5 dark:hover:bg-white/10">
+                      <div className="w-9 h-9 rounded-full overflow-hidden bg-secondary border border-border flex-shrink-0 dark:bg-slate-800 dark:border-white/10">
                         {account.account_image ? (
                           <img src={account.account_image} alt={account.account_name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-white font-bold text-xs">
+                          <div className="w-full h-full flex items-center justify-center text-primary-foreground font-bold text-xs">
                             {account.account_name?.[0].toUpperCase()}
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{account.account_name}</p>
+                        <p className="text-sm font-medium text-foreground truncate dark:text-white">{account.account_name}</p>
                         <p className="text-[10px] text-slate-500 uppercase tracking-tighter">ID: {account.zernio_account_id.slice(0, 8)}...</p>
                       </div>
                       <button 
@@ -209,14 +209,14 @@ function AccountsContent() {
                 </div>
               </div>
 
-              <div className="mt-6 pt-6 border-t border-white/5">
+              <div className="mt-6 pt-6 border-t border-border/60 dark:border-white/5">
                 <button
                   onClick={() => handleConnect(platform.id)}
                   disabled={isConnecting || loading}
                   className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-50 ${
                     accounts.length > 0 
-                      ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10' 
-                      : 'bg-primary text-white shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:opacity-90'
+                      ? 'bg-muted border border-border text-foreground hover:bg-muted/80 dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10' 
+                      : 'bg-primary text-primary-foreground shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:opacity-90'
                   }`}
                 >
                   {isConnecting ? (
@@ -238,24 +238,24 @@ function AccountsContent() {
       </div>
 
       {/* Info Card */}
-      <div className="glass rounded-3xl p-8 border border-white/10 bg-gradient-to-br from-white/5 to-transparent relative overflow-hidden">
+      <div className="glass rounded-3xl p-8 border border-border bg-gradient-to-br from-muted/50 to-transparent relative overflow-hidden dark:border-white/10 dark:from-white/5">
         <div className="relative z-10">
-          <h2 className="text-xl font-bold text-white mb-4">How it works</h2>
+          <h2 className="text-xl font-bold text-foreground mb-4 dark:text-white">How it works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">1</div>
-              <h3 className="font-bold text-white text-sm">Choose Platform</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">Select the social media platform you want to connect to your profile.</p>
+              <h3 className="font-bold text-foreground text-sm dark:text-white">Choose Platform</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">Select the social media platform you want to connect to your profile.</p>
             </div>
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">2</div>
-              <h3 className="font-bold text-white text-sm">Authorize Zernio</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">You will be redirected to the platform's official site to authorize the connection safely.</p>
+              <h3 className="font-bold text-foreground text-sm dark:text-white">Authorize Zernio</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">You will be redirected to the platform's official site to authorize the connection safely.</p>
             </div>
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">3</div>
-              <h3 className="font-bold text-white text-sm">Automate & Scale</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">Once connected, you can schedule AI-generated posts to multiple accounts at once.</p>
+              <h3 className="font-bold text-foreground text-sm dark:text-white">Automate & Scale</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">Once connected, you can schedule AI-generated posts to multiple accounts at once.</p>
             </div>
           </div>
         </div>
